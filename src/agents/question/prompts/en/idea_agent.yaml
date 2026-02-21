@@ -50,3 +50,19 @@ generate_ideas: |
       }}
     ]
   }}
+
+aggregate_context: |
+  You are given multiple knowledge retrieval results for the topic: {user_topic}
+
+  Raw retrieval results:
+  {raw_context}
+
+  Synthesize the above into a single, well-organized knowledge summary.
+  Rules:
+  - Remove redundant or duplicate information.
+  - Preserve key concepts, theorems, formulas, and examples.
+  - Organize logically (definitions first, then properties/methods, then applications).
+  - Keep the summary concise but information-dense.
+  - Do NOT add information that is not present in the retrievals.
+
+  Return the synthesized knowledge summary as plain text (no JSON).

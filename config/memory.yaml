@@ -13,11 +13,6 @@ memory:
   auto_update: true
   # Maximum ReAct rounds per agent
   max_react_rounds: 6
-  # Offload agent execution to the standalone personalization terminal
-  # (python scripts/start_personalization.py). When true, the main CLI only
-  # registers traces and pushes flush requests to the file queue; the
-  # standalone terminal runs the actual memory agents with full logging.
-  offload_agents: true
 
 agents:
   reflection:

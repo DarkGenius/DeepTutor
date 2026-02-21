@@ -147,40 +147,29 @@ def create_task_logger(
     queue: Optional["asyncio.Queue"] = None,
 ) -> logging.Logger:
     """
-    Create a logger for a specific task with file and optional WebSocket output.
+    Create a logger for a specific task with file output.
 
     Args:
         task_id: Unique task identifier
-        module_name: Module name (e.g., "Solver", "Research")
+        module_name: Module name (e.g., "Solver", "Question")
         log_dir: Directory for log files
-        queue: Optional asyncio.Queue for WebSocket streaming
+        queue: Unused, kept for API compatibility
 
     Returns:
         Configured logger
     """
-    from .websocket import WebSocketLogHandler
-
-    # Create log directory
     log_path = Path(log_dir)
     log_path.mkdir(parents=True, exist_ok=True)
 
-    # Create logger
     logger = logging.getLogger(f"deeptutor.{module_name}.{task_id}")
     logger.setLevel(logging.DEBUG)
     logger.handlers.clear()
     logger.propagate = False
 
-    # File handler
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_file = log_path / f"{module_name}_{task_id}_{timestamp}.log"
 
     file_handler = FileHandler(str(log_file))
     logger.addHandler(file_handler)
-
-    # WebSocket handler if queue provided
-    if queue is not None:
-        ws_handler = WebSocketLogHandler(queue)
-        ws_handler.setLevel(logging.INFO)
-        logger.addHandler(ws_handler)
 
     return logger

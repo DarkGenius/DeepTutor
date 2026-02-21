@@ -7,7 +7,6 @@ A clean, consistent logging system with:
 - Unified format: [Module] Symbol Message
 - English-only output
 - File output to data/user/logs/
-- WebSocket streaming support
 - Color-coded console output
 - LLM usage statistics tracking
 - External library log forwarding (LightRAG, LlamaIndex)
@@ -26,7 +25,6 @@ Usage:
     stats.print_summary()
 """
 
-# Core logging
 # Adapters for external libraries
 from .adapters import (
     LightRAGLogContext,
@@ -49,9 +47,7 @@ from .handlers import (
     ConsoleHandler,
     FileHandler,
     JSONFileHandler,
-    LogInterceptor,
     RotatingFileHandler,
-    WebSocketLogHandler,
 )
 from .logger import (
     ConsoleFormatter,
@@ -86,8 +82,6 @@ __all__ = [
     "FileHandler",
     "JSONFileHandler",
     "RotatingFileHandler",
-    "WebSocketLogHandler",
-    "LogInterceptor",
     # Adapters
     "LightRAGLogContext",
     "LightRAGLogForwarder",

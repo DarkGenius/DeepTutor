@@ -11,7 +11,6 @@ agents (Reflection, Summary, Weakness) in parallel.
 import asyncio
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -65,7 +64,6 @@ class PersonalizationService:
         self._reader: Optional[MemoryReader] = None
         self._config: Dict[str, Any] = {}
         self._language = "en"
-        self._offload_agents = False
 
         self._reflection_agent: Optional[ReflectionAgent] = None
         self._summary_agent: Optional[SummaryAgent] = None
@@ -101,71 +99,16 @@ class PersonalizationService:
     def max_react_rounds(self) -> int:
         return self._config.get("memory", {}).get("max_react_rounds", 6)
 
-    @property
-    def offload_agents_config(self) -> bool:
-        """If true, push agent execution to the file queue for the standalone terminal."""
-        return self._config.get("memory", {}).get("offload_agents", False)
-
     def _agent_enabled(self, name: str) -> bool:
         agents_cfg = self._config.get("agents", {})
         return agents_cfg.get(name, {}).get("enabled", True)
-
-    def _mute_console_logging(self) -> None:
-        """Suppress console output from personalization-related loggers.
-
-        Detailed logs still go to log files and to the dedicated
-        personalization terminal (``start_personalization.py``) which
-        sets up its own handlers.
-        """
-        # 1. Standard Python loggers under src.personalization.*
-        #    (used by service.py, react_runner.py, trace_tools.py, etc.)
-        parent = logging.getLogger("src.personalization")
-        parent.propagate = False
-        if not parent.handlers:
-            parent.addHandler(logging.NullHandler())
-
-        # 2. Custom Logger instances on the three memory agents
-        for agent in (self._reflection_agent, self._summary_agent, self._weakness_agent):
-            if agent and hasattr(agent, "logger"):
-                self._strip_console_handlers(agent.logger)
-
-        # 3. EmbeddingClient logger (triggered by trace forest embedding)
-        embed_logger = logging.getLogger("EmbeddingClient")
-        self._strip_console_handlers_stdlib(embed_logger)
-
-    @staticmethod
-    def _strip_console_handlers(custom_logger: Any) -> None:
-        """Remove StreamHandlers (console) from a custom Logger wrapper."""
-        inner = getattr(custom_logger, "logger", None)
-        if inner is None:
-            return
-        for handler in inner.handlers[:]:
-            if isinstance(handler, logging.StreamHandler) and not isinstance(
-                handler, logging.FileHandler
-            ):
-                inner.removeHandler(handler)
-
-    @staticmethod
-    def _strip_console_handlers_stdlib(std_logger: logging.Logger) -> None:
-        """Remove StreamHandlers from a standard library logger."""
-        for handler in std_logger.handlers[:]:
-            if isinstance(handler, logging.StreamHandler) and not isinstance(
-                handler, logging.FileHandler
-            ):
-                std_logger.removeHandler(handler)
 
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
 
-    async def start(self, quiet: bool = True) -> None:
-        """Start the personalization service.
-
-        Args:
-            quiet: If True (default), suppress console output from
-                personalization loggers so the main terminal stays clean.
-                Set to False when running in a dedicated terminal.
-        """
+    async def start(self) -> None:
+        """Start the personalization service."""
         if self._running:
             logger.debug("PersonalizationService already running")
             return
@@ -186,18 +129,6 @@ class PersonalizationService:
         self._weakness_agent = WeaknessAgent(
             language=self._language, temperature=temperature,
         )
-
-        if quiet:
-            self._mute_console_logging()
-
-        self._offload_agents = quiet and self.offload_agents_config
-        if self._offload_agents:
-            from src.core.event_bus import enable_file_queue
-            enable_file_queue()
-            logger.info(
-                "PersonalizationService: agent execution offloaded to "
-                "standalone terminal (file queue enabled)"
-            )
 
         if self.auto_update:
             event_bus = get_event_bus()
@@ -249,10 +180,6 @@ class PersonalizationService:
                     "[MEM-WRITE] Question trace registered; "
                     "memory agents deferred until all answers are recorded."
                 )
-                return
-
-            if self._offload_agents:
-                self._push_memory_flush(trace.trace_id)
                 return
 
             await self._run_memory_agents(trace)
@@ -723,14 +650,7 @@ class PersonalizationService:
 
         Called explicitly by the caller (e.g. question CLI) once the full
         interaction is finished, so that agents see the complete trace.
-
-        When ``offload_agents`` is enabled, the request is pushed to the
-        file queue for the standalone personalization terminal to handle.
         """
-        if self._offload_agents:
-            self._push_memory_flush(trace_id)
-            return
-
         if not self._forest:
             self._forest = TraceForest()
 
@@ -744,29 +664,6 @@ class PersonalizationService:
             trace_id, len(tree.nodes),
         )
         await self._run_memory_agents(tree)
-
-    def _push_memory_flush(self, trace_id: str) -> None:
-        """Push a FLUSH_MEMORY request to the file queue for the standalone terminal."""
-        try:
-            from .event_queue import QueuedEvent, get_event_queue
-
-            queued = QueuedEvent(
-                event_id=f"flush_{trace_id}",
-                event_type="FLUSH_MEMORY",
-                task_id=trace_id,
-                user_input="",
-                agent_output="",
-                tools_used=[],
-                success=True,
-                metadata={"trace_id": trace_id},
-                timestamp=datetime.now().isoformat(),
-            )
-            get_event_queue().push(queued)
-            logger.info(
-                "[MEM-WRITE] Pushed FLUSH_MEMORY to file queue: trace=%s", trace_id,
-            )
-        except Exception as exc:
-            logger.error("[MEM-WRITE] Failed to push flush to queue: %s", exc)
 
     # ------------------------------------------------------------------
     # Public interface (read path)

@@ -1,0 +1,33 @@
+# ======================================================================
+# MATH Benchmark Configuration
+# ======================================================================
+
+# --- Dataset ---
+# First run downloads from HuggingFace and caches locally.
+# Override with --dataroot to use a local file.
+dataset:
+  parquet_url: "hf://datasets/qwedsacf/competition_math/data/train-00000-of-00001-7320a6f3aba8ebd2.parquet"
+
+# --- Filtering ---
+filter:
+  # subjects:                  # Uncomment to filter by subject(s):
+  #   - Algebra                #   Prealgebra, Algebra, Number Theory,
+  #   - Prealgebra             #   Counting & Probability, Geometry,
+  #                            #   Intermediate Algebra, Precalculus
+  # levels:                    # Uncomment to filter by level(s) 1-5:
+  #   - 1
+  #   - 2
+  #   - 3
+  limit: 50                   # Max problems to evaluate (null = all 12498)
+  seed: 42                    # Random seed for sampling
+
+# --- LLM settings (for direct mode) ---
+llm:
+  temperature: 0.0            # 0.0 = greedy / deterministic
+  max_tokens: 4096            # Max output tokens per problem
+
+# --- Concurrency (for direct mode) ---
+concurrency: 5                # Parallel LLM requests
+
+# --- Output ---
+output_dir: benchmark/iso_solve/results

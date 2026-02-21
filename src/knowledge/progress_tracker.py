@@ -58,40 +58,6 @@ class ProgressTracker:
 
     def _notify(self, progress: dict):
         """Notify progress update (call all callbacks)"""
-        # Try to send via broadcaster (if available)
-        try:
-            from src.api.utils.progress_broadcaster import ProgressBroadcaster
-
-            broadcaster = ProgressBroadcaster.get_instance()
-
-            # Try to get current event loop and broadcast
-            try:
-                loop = asyncio.get_running_loop()
-                # If event loop is running, use create_task (non-blocking)
-                asyncio.create_task(broadcaster.broadcast(self.kb_name, progress))
-            except RuntimeError:
-                # No running event loop, try to get main event loop
-                try:
-                    # Try to get main event loop (FastAPI main loop)
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        # If loop is running, create task
-                        asyncio.create_task(broadcaster.broadcast(self.kb_name, progress))
-                    else:
-                        # If loop exists but not running, try to run (may fail, but doesn't affect main flow)
-                        try:
-                            loop.run_until_complete(broadcaster.broadcast(self.kb_name, progress))
-                        except RuntimeError:
-                            # Cannot run, ignore
-                            pass
-                except RuntimeError:
-                    pass
-        except (ImportError, Exception):
-            # Broadcaster unavailable or error, continue using callbacks
-            # Don't print error to avoid interfering with normal flow
-            pass
-
-        # Call all registered callbacks
         for callback in self._callbacks:
             try:
                 callback(progress)

@@ -15,3 +15,14 @@ This file describes what the current LLM system does at runtime.
 - Picks the final model by priority: agent override → global config → env defaults.
 - Injects provider-specific kwargs (e.g., token limit fields) safely per model.
 - Keeps a shared stats tracker per module for aggregated usage reporting.
+
+## Scope
+
+This repository is the **paper evaluation** variant of DeepTutor, containing only:
+- Question Generation (出题)
+- Question Solving (解题)
+- RAG (Retrieval-Augmented Generation)
+- Memory / Personalization
+- Evaluation framework (benchmark + simu_tool)
+
+All features are CLI-driven. There is no web frontend or HTTP API.

@@ -48,7 +48,10 @@ class IdeaAgent(BaseAgent):
         """
         queries = await self._generate_rag_queries(user_topic=user_topic, num_queries=3)
         retrievals = await self._retrieve_context(queries)
-        knowledge_context = self._build_context(retrievals)
+        raw_context = self._build_context(retrievals)
+        knowledge_context = await self._aggregate_context(
+            user_topic=user_topic, raw_context=raw_context
+        )
         ideas = await self._generate_ideas(
             user_topic=user_topic,
             preference=preference,
@@ -62,6 +65,7 @@ class IdeaAgent(BaseAgent):
             "ideas": ideas,
             "queries": queries,
             "retrievals": retrievals,
+            "raw_context": raw_context,
             "knowledge_context": knowledge_context,
         }
 
@@ -127,6 +131,27 @@ class IdeaAgent(BaseAgent):
             clipped = answer[:2000] + ("...[truncated]" if len(answer) > 2000 else "")
             sections.append(f"=== Query: {item.get('query','')} ===\n{clipped}")
         return "\n\n".join(sections) if sections else "No retrieval context available."
+
+    async def _aggregate_context(self, user_topic: str, raw_context: str) -> str:
+        if not raw_context or raw_context == "No retrieval context available.":
+            return raw_context
+
+        system_prompt = self.get_prompt("system", "")
+        agg_prompt = self.get_prompt("aggregate_context", "")
+        if not agg_prompt:
+            return raw_context
+
+        user_prompt = agg_prompt.format(user_topic=user_topic, raw_context=raw_context)
+        try:
+            aggregated = await self.call_llm(
+                user_prompt=user_prompt,
+                system_prompt=system_prompt or "",
+                stage="idea_aggregate_context",
+            )
+            return aggregated.strip() if aggregated.strip() else raw_context
+        except Exception as exc:
+            self.logger.warning(f"Context aggregation failed, using raw context: {exc}")
+            return raw_context
 
     async def _generate_ideas(
         self,

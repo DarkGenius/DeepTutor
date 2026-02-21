@@ -201,6 +201,7 @@ class TraceForest:
 
     def _save_tree(self, tree: TraceTree) -> None:
         path = self._tree_path(tree.trace_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
             json.dumps(tree.to_dict(), ensure_ascii=False, indent=2),
             encoding="utf-8",
