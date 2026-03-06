@@ -40,6 +40,8 @@ def _mask_key(key: str) -> str:
 
 
 async def run_factory_test(prompt: str, system_prompt: str, max_tokens: int, temperature: float) -> None:
+    cfg = get_llm_config()
+    print(f"[FactoryTest] model={cfg.model}")
     print("[FactoryTest] Calling factory.complete(...)")
     answer = await factory.complete(
         prompt=prompt,
@@ -48,7 +50,7 @@ async def run_factory_test(prompt: str, system_prompt: str, max_tokens: int, tem
         temperature=temperature,
     )
     text = (answer or "").strip()
-    print("[FactoryTest] OK")
+    print(f"[FactoryTest] OK  (model={cfg.model})")
     print("[FactoryTest] Response preview:")
     print(text[:1000] if text else "(empty)")
 
