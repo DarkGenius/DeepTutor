@@ -9,7 +9,6 @@ The agent:
 - Initiates conversation with task.initial_message
 - Responds to tutor messages while staying in character
 - Naturally exhibits knowledge gaps (misconceptions, incomplete understanding)
-- Gradually learns from good explanations but doesn't accept corrections instantly
 
 Usage:
     agent = StudentAgent.from_entry(entry)
@@ -93,29 +92,6 @@ def _build_beliefs_text(gaps: list[dict]) -> str:
     return "\n\n".join(f"[Belief {i+1}]\n{b}" for i, b in enumerate(beliefs))
 
 
-def _build_gap_pacing_text(task: dict, gaps: list[dict]) -> str:
-    """Build natural gap-exposure guidance — no rigid turn schedule."""
-    num_gaps = len(gaps)
-    if num_gaps == 0:
-        return "You have no specific confusions to reveal."
-
-    lines = [
-        "You have several confusions/gaps (listed in the Beliefs section above), "
-        "but you are NOT aware of them as a list. They surface naturally:",
-        "",
-        "- Start the conversation with whatever feels most relevant to your question.",
-        "- Only bring up a confusion when it genuinely connects to what you and the tutor are discussing.",
-        "- If the tutor's explanation touches on one of your misconceptions, react naturally — ",
-        "  express surprise, push back, or ask a follow-up.",
-        "- You do NOT need to hold back confusions. If something comes up that you're confused about, bring it up.",
-        "- There is no limit on how many confusions you can surface across the session.",
-        "",
-        "Per-reply guideline: prefer focusing on one confusion at a time for clarity, "
-        "but if two issues are genuinely entangled you may mention both.",
-    ]
-    return "\n".join(lines)
-
-
 class StudentAgent:
     """
     An LLM-powered student agent for tutor evaluation.
@@ -165,7 +141,6 @@ class StudentAgent:
         """
         profile = entry.get("profile", {})
         gaps = entry.get("gaps", [])
-        task = entry.get("task", {})
         entry_id = entry.get("entry_id", "unknown")
 
         # Build system prompt from template
@@ -185,7 +160,6 @@ class StudentAgent:
             partially_known=_format_list(knowledge_state.get("partially_known", [])),
             unknown=_format_list(knowledge_state.get("unknown", [])),
             beliefs=_build_beliefs_text(gaps),
-            gap_pacing_plan=_build_gap_pacing_text(task, gaps),
         )
 
         if prior_sessions_context:

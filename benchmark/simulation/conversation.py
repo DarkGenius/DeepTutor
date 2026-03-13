@@ -248,6 +248,39 @@ _TUTOR_INSTRUCTION_BASE = (
     "You are a helpful and patient tutor."
 )
 
+_HISTORY_CHAR_BUDGET = 2000
+
+
+def _build_conversation_context(tutor_history: list[dict[str, str]]) -> str:
+    """Build a compact conversation-so-far block from tutor_history.
+
+    Keeps the most recent turns within a character budget so the solver
+    can adapt to the student's expressed confusion and level without
+    exposing any private profile data.
+    """
+    if not tutor_history:
+        return ""
+    lines: list[str] = []
+    total = 0
+    for msg in reversed(tutor_history):
+        role = "Student" if msg.get("role") == "user" else "Tutor"
+        text = (msg.get("content", "") or "").strip()
+        if not text:
+            continue
+        entry = f"[{role}] {text}"
+        if total + len(entry) > _HISTORY_CHAR_BUDGET:
+            break
+        lines.append(entry)
+        total += len(entry)
+    if not lines:
+        return ""
+    lines.reverse()
+    return (
+        "## Conversation so far\n"
+        + "\n".join(lines)
+        + "\n\n"
+    )
+
 
 def _build_tutor_instruction(student_message: str) -> str:
     """Build adaptive tutoring instruction without rule-based matching."""
@@ -262,18 +295,24 @@ async def deep_tutor_respond(
     language: str = "en",
     enable_rag: bool = True,
     enable_memory: bool = True,
+    rag_mode: str = "naive",
+    tutor_history: list[dict[str, str]] | None = None,
 ) -> str:
     """
     Generate tutor response via DeepTutor solve pipeline.
     Wraps the student message with tutoring instructions so the
     WriterAgent produces a pedagogical response rather than an essay.
+    Conversation history (tutor_history) is prepended so the solver
+    can adapt to what the student has expressed, without exposing
+    any private student profile data.
     """
     from benchmark.simulation.tools import solve_question
 
     if not kb_name:
         return "(DeepTutor unavailable: missing kb_name in entry.)"
 
-    question = _build_tutor_instruction(student_message) + student_message
+    convo_ctx = _build_conversation_context(tutor_history or [])
+    question = convo_ctx + _build_tutor_instruction(student_message) + student_message
     enabled_tools = ["code_execute", "reason"]
     if enable_rag:
         enabled_tools.insert(0, "rag_search")
@@ -286,7 +325,7 @@ async def deep_tutor_respond(
         enabled_tools=enabled_tools,
         enable_memory=enable_memory,
         enable_planner_retrieve=enable_rag,
-        rag_mode="naive",
+        rag_mode=rag_mode,
     )
     answer = (result.get("answer") or "").strip()
     return answer or "(No answer generated.)"
@@ -528,6 +567,7 @@ async def _run_single_session(
     auto_backend: AutoBackend = "deep_tutor",
     deeptutor_workspace: str | None = None,
     deeptutor_language: str = "en",
+    deeptutor_rag_mode: str = "naive",
     prior_sessions_summary: str | None = None,
 ) -> dict:
     """
@@ -573,6 +613,8 @@ async def _run_single_session(
                         language=deeptutor_language,
                         enable_rag=deep_flags.get("enable_rag", True),
                         enable_memory=deep_flags.get("enable_memory", True),
+                        rag_mode=deeptutor_rag_mode,
+                        tutor_history=tutor_history,
                     )
                 else:
                     tutor_msg = await mock_tutor_respond(
@@ -771,6 +813,7 @@ async def run_conversation(
                         language=deeptutor_language,
                         enable_rag=deep_flags.get("enable_rag", True),
                         enable_memory=deep_flags.get("enable_memory", True),
+                        tutor_history=tutor_history,
                     )
                 else:
                     tutor_msg = await mock_tutor_respond(

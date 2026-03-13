@@ -109,6 +109,7 @@ async def _simulate_profile_backend(
     output_root: Path,
     max_turns: int,
     language: str,
+    deeptutor_rag_mode: str,
     evolve_profile: bool,
     verbose: bool,
     force: bool,
@@ -211,6 +212,7 @@ async def _simulate_profile_backend(
                     auto_backend=backend,
                     deeptutor_workspace=workspace,
                     deeptutor_language=language,
+                    deeptutor_rag_mode=deeptutor_rag_mode,
                     prior_sessions_summary=prior_ctx,
                 )
             if verbose:
@@ -294,6 +296,7 @@ async def _process_profile(
     backend_semaphore: asyncio.Semaphore,
     max_turns: int,
     language: str,
+    deeptutor_rag_mode: str,
     evolve_profile: bool,
     verbose: bool,
     force: bool,
@@ -317,6 +320,7 @@ async def _process_profile(
                     output_root=output_root,
                     max_turns=max_turns,
                     language=language,
+                    deeptutor_rag_mode=deeptutor_rag_mode,
                     evolve_profile=evolve_profile,
                     verbose=verbose,
                     force=force,
@@ -395,6 +399,15 @@ async def main() -> None:
     parser.add_argument("--max-turns", type=int, default=30, help="Max student turns per session")
     parser.add_argument("--language", default="en", help="DeepTutor language")
     parser.add_argument(
+        "--deeptutor-rag-mode",
+        default="naive",
+        choices=["naive", "hybrid", "local", "global"],
+        help=(
+            "RAG mode for DeepTutor backends with RAG enabled "
+            "(deep_tutor and deep_tutor_no_memory)."
+        ),
+    )
+    parser.add_argument(
         "--model",
         default="",
         help="Override LLM model for step2 simulation. If set, ignores env LLM_MODEL.",
@@ -448,6 +461,7 @@ async def main() -> None:
     print(f"KBs: {len(kb_names)} | Concurrency(profile): {args.concurrency}")
     print(f"Backends(parallel/profile): {backends}")
     print(f"Backend concurrency/profile: {args.backend_concurrency}")
+    print(f"DeepTutor RAG mode: {args.deeptutor_rag_mode}")
     print(f"Dialogue logs: {'enabled (-v/--verbose)' if args.verbose else 'disabled'}")
     print(f"Resume mode: {'disabled (--force)' if args.force else 'enabled (skip existing entries)'}")
     if args.verbose and not args.force:
@@ -520,6 +534,7 @@ async def main() -> None:
                     backend_semaphore=backend_sem,
                     max_turns=args.max_turns,
                     language=args.language,
+                    deeptutor_rag_mode=args.deeptutor_rag_mode,
                     evolve_profile=not args.no_evolve,
                     verbose=args.verbose,
                     force=args.force,
@@ -571,6 +586,7 @@ async def main() -> None:
         "concurrency_profile": args.concurrency,
         "backend_concurrency_per_profile": max(1, args.backend_concurrency),
         "backend_execution": "parallel_per_profile",
+        "deeptutor_rag_mode": args.deeptutor_rag_mode,
         "overwrite": bool(args.force),
         "pre_errors": pre_errors,
         "results": profile_results,
