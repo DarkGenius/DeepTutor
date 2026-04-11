@@ -1,0 +1,37 @@
+% ============================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% ============================================================
+
+In this paper, we present \textsc{DeepTutor}, an open-source framework for personalized tutoring built around a shared personalization substrate and organized along two complementary dimensions.
+
+The first dimension, \emph{personalized agentic tutoring}, establishes the validated core of the system.
+A hybrid personalization engine couples static knowledge grounding with a dynamic trace forest to close a bidirectional loop between citation-grounded problem solving and difficulty-calibrated question generation.
+The same engine extends to collaborative writing, deep research, and guided learning, ensuring that progress in any modality informs the others.
+The second dimension, \emph{proactive autonomous companionship}, deploys these capabilities in a broader setting through TutorBot, where autonomous agents operate through extensible skills, multi-bot coordination, and context-unified multi-channel access.
+
+Evaluation of the foundational pipeline on TutorBench, together with a first-person interactive protocol designed from the learner's perspective, demonstrates a 10.8\% improvement on personalized tutoring metrics and an average 28.6\% gain on general reasoning benchmarks across five backbone models.
+Ablation studies confirm that knowledge grounding and learner memory contribute along largely complementary axes, validating the hybrid design upon which the broader system is built.
+
+\paragraph{Broader Implications.}
+The architectural pattern explored here extends beyond education.
+Whenever an AI system must personalize over time while remaining coherent across tools and interfaces, a shared personalization substrate paired with a proactive deployment layer offers a useful design template.
+\textsc{DeepTutor} can be viewed as one concrete instantiation of this broader class of agentic personalized systems.
+
+\paragraph{Future Work.}
+Longitudinal deployment studies with real students would provide the most rigorous validation of the cognitive extensions and the proactive multi-agent layer.
+Collaborative writing, deep research, guided learning, and cross-channel TutorBot behaviors should be evaluated with deployment-scale metrics that capture retention, follow-up quality, and sustained learner engagement.
+The trace forest could benefit from more sophisticated consolidation strategies, such as importance-weighted compression and cross-modality summarization, as interaction histories grow over time.
+Integrating multimodal understanding of handwriting, diagrams, and speech would further close the gap between AI-based and human tutoring.
+Finally, formalizing the conditions under which proactive agency improves learning outcomes, rather than merely system capability, remains an important open question for the community.
+
+\section*{Limitations}
+
+Our interactive evaluation relies on LLM-powered student simulators and rubric-based assessors, which inherit an irreducible gap between controlled simulation and real learner behavior.
+Large-scale validation with human students is an essential next step.
+For reasons of experimental tractability and evaluation cost, this report concentrates quantitative study on the foundational tutoring pipeline rather than attempting to fully measure every higher-level modality and proactive behavior in a single benchmark.
+The general reasoning evaluation in Table~\ref{tab:generalization} compares the full pipeline, including its tool suite, against bare backbone models; isolating the contribution of the pipeline structure alone from the contribution of tool augmentation requires further experimentation.
+The multi-stage pipeline trades additional inference cost for stronger controllability and personalization, and the economics of this trade-off depend on the deployment context.
+Evaluation of the cognitive extensions and TutorBot requires longitudinal and deployment-based studies that remain future work.
+The TutorBench construction pipeline could be extended to finer-grained courses, longer trajectories, and more diverse populations.
+While we articulate a design for context-unified proactive tutoring, rigorously measuring its long-term impact on learning outcomes remains an open frontier.

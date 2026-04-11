@@ -1,0 +1,45 @@
+% ============================================================
+\section{Introduction}
+\label{sec:intro}
+% ============================================================
+
+Large language models have made open-ended educational dialogue practical, yet most deployed LLM tutors remain session-bounded assistants. They adapt to the immediate prompt rather than to a persistent learner model, and their functions are often implemented as isolated modules~\citep{chu-etal-2025-llm,letourneau2025systematicreviewaidriven}.
+While a system may answer questions or generate exercises, these components share little state with one another. The result is not merely weaker personalization but a fragmented learning experience where pedagogical progress in one interaction rarely informs the next, as illustrated in Figure~\ref{fig:compare}.
+
+Adopting a systems view, we argue that personalized tutoring requires a unified architecture rather than isolated prompts. This architecture must synchronize learner memory, task decomposition, and tool usage across multimodal sessions. Crucially, it should also provide a scalable framework for evolving from reactive to proactive support, obviating the need to rebuild the core runtime when introducing new interfaces or behaviors.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/compare-0411.png}
+    \caption{Comparison between prior LLM products with \textsc{DeepTutor}. Conventional LLM tutors rely on generic priors, producing answers or exercises that may mismatch the learner's syllabus and proficiency, while \textsc{DeepTutor} grounds both problem solving and question generation in the learner's knowledge base and diagnosed weaknesses.}
+    \label{fig:compare}
+\end{figure}
+
+Agent-Native Design. The agentic paradigm~\citep{yao2023reactsynergizingreasoningacting,wang2024survey} is uniquely suited to this challenge for three reasons.
+First, agents can maintain persistent state across extended horizons, which is essential for cultivating a dynamic learner model rather than treating interactions as isolated events.
+For instance, a tutoring agent can diagnose recurring misconceptions, such as a student's persistent confusion between the chain and product rules, and adaptively refine its instructional strategy when relevant topics re-emerge in future sessions.
+Second, agents can orchestrate tools and sub-agents into structured workflows, enabling complex tasks like problem-solving, targeted exercise generation, and guided learning to be implemented as systematic pipelines rather than brittle prompt chains.
+Third, the underlying agent infrastructure provides a scalable foundation for autonomous operation, allowing proactive behaviors to extend the system’s utility without re-engineering its core logic.
+Consequently, we architect \textsc{DeepTutor} along two complementary dimensions: \emph{personalized agentic tutoring}, which establishes the core pipelines and the unifying personalization engine, and \emph{proactive autonomous companionship}, which leverages those pipelines for long-term, cross-platform engagement.
+\begin{itemize}[leftmargin=*]
+\item \textbf{Personalized Agentic Tutoring.}\quad
+A hybrid personalization engine synthesizes static knowledge grounding with a dynamic \emph{trace forest}, distilling interaction history into a continuously refined learner profile.
+We establish a closed-loop pedagogy that interlocks citation-grounded problem solving with difficulty-calibrated question generation. This shared substrate further powers collaborative writing, multi-agent deep research, and interactive guided learning, ensuring that pedagogical progress transcends individual modalities.
+
+\item \textbf{Proactive Autonomous Companionship.}\quad
+Through \textsc{TutorBot}, \textsc{DeepTutor} operationalizes its tutoring core into autonomous agents equipped with extensible skills, multi-bot coordination, and context-preserving multi-channel gateways.
+This architecture transforms the system from a reactive interface into a proactive companion capable of autonomously initiating review sessions, synthesizing daily practice, and remediating diagnosed knowledge gaps across platforms.
+\end{itemize}
+
+This report presents \textsc{DeepTutor}, an open-source framework that actualizes this vision. The system is built upon a unified runtime where personalization, context propagation, and event-based streaming are natively shared across all workflows, spanning both reactive tutoring and proactive deployment. We offer this two-dimensional design as a generalizable blueprint for architecting personalized tutoring systems that seamlessly evolve into context-aware, proactive agents.
+
+To evaluate the system’s core, we construct \textsc{TutorBench}, a student-centric benchmark comprising university-level materials across five diverse disciplines. Each entry synthesizes a source-grounded learner profile with diagnosed knowledge gaps and a corresponding interactive tutoring task. A first-person student simulator conducts multi-turn dialogues to rigorously assess adaptive pedagogical behaviors from the learner's perspective. 
+In this report, we focus our quantitative evaluation on the foundational tutoring pipeline while characterizing cognitive extensions and \textsc{TutorBot} as system components whose long-term efficacy warrants extended longitudinal studies.
+
+Our main contributions are as follows:
+\begin{itemize}[nosep,leftmargin=*]
+\item We propose \textsc{DeepTutor}, a novel intelligent tutoring framework that decouples a validated pedagogical core (\emph{personalized agentic tutoring}) from its deployment-oriented extensions (\emph{proactive autonomous companionship}), both anchored by a unified personalization engine.
+\item We introduce a dynamic multi-resolution memory architecture that distills multi-turn interaction history into a continuously refined learner profile, enabling a tightly coupled bidirectional loop between problem solving and personalized question generation.
+\item We design \textsc{TutorBot}, a proactive multi-agent layer that operationalizes tutoring capabilities through extensible skills, multi-agent coordination, and context-unified access across multiple platforms.
+\item We construct \textsc{TutorBench}, a student-centric benchmark featuring a first-person interactive protocol to assess adaptive pedagogy. Empirical results demonstrate that \textsc{DeepTutor} improves personalized tutoring quality by 10.8\% over the strongest baseline, while simultaneously achieving an average 28.6\% gain in general reasoning across five backbone models on standard benchmarks.
+\end{itemize}

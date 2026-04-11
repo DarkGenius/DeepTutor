@@ -1,0 +1,27 @@
+% ============================================================
+\section{Related Work}
+\label{sec:related}
+% ============================================================
+
+\paragraph{Tool-Augmented LLM Agents.}
+The evolution from monolithic LLM prompting to tool-augmented reasoning has been swift.
+Early work demonstrated that language models can learn to invoke external APIs through supervised fine-tuning~\citep{schick2024toolformer}, while subsequent frameworks interleaved explicit thought and action traces to enable dynamic, multi-step tool use~\citep{yao2023reactsynergizingreasoningacting}.
+Recent advances have expanded the planning horizon of such agents, from hierarchical sub-goal decomposition~\citep{zhao2025llmbasedagenticreasoningframeworks,wu-etal-2025-agentic,li2025intheflowagenticoptimizationeffective} to long-horizon research pipelines that maintain coherent state across many reasoning steps~\citep{chen2026iterresearch}.
+A common thread, however, is that these agents operate in bounded episodes: they begin, reason, and conclude within a single session.
+Tutoring, by contrast, is an inherently \emph{longitudinal} endeavor that spans weeks or months and benefits from an evolving model of the individual learner, a requirement that existing agentic frameworks do not directly address.
+
+\paragraph{Personalization and Memory in LLMs.}
+Endowing language models with persistent, user-specific memory is an active research front.
+Dialogue-level approaches employ reflective summarization to compress past conversations into reusable context~\citep{tan-etal-2025-prospect}, while user-modeling methods accumulate structured preferences and attributes across sessions~\citep{li-etal-2025-hello,cho-etal-2022-personalized}.
+At the retrieval layer, RAG-based personalization injects user-relevant documents into the generation context~\citep{li2025surveypersonalizationragagent,guo2025raganythingallinoneragframework}, and workflow-induction techniques distill recurring behavioral patterns into reusable agent plans~\citep{wang2024agentworkflowmemory}.
+Architecturally, hierarchical memory systems such as MemGPT~\citep{packer2023memgpt}, HiMem~\citep{qin2025himem}, and G-Memory~\citep{yang2025gmemory} organize information at multiple temporal scales.
+In the education domain specifically, learner modeling has a long history through knowledge tracing, evolving from Bayesian formulations~\citep{corbett1994knowledge} to neural architectures~\citep{piech2015deep,zhang2017dkvmn,ghosh2020akt}.
+We build on both traditions with a tree-structured dynamic memory called the \emph{trace forest}, designed specifically for tutoring. Unlike flat conversation logs or fixed-size summaries, the trace forest preserves interaction history at multiple resolutions and feeds back into both problem solving and question generation.
+
+\paragraph{AI for Education.}
+The application of LLMs to education has generated a rich and rapidly growing literature.
+Recent work spans conversational tutoring with explicit student modeling~\citep{park2024empoweringpersonalizedlearning}, multi-agent pedagogical architectures~\citep{wang2025llmpoweredmultiagentframeworkgoaloriented}, open-source tutoring platforms~\citep{xu2025opentutorai}, conversational learning diagnosis~\citep{chen2026parld}, knowledge-tracing-augmented recommendation~\citep{liu2025tutorllm}, and pedagogically aligned optimization of tutor behavior~\citep{dinucujianu2025pedagogy}.
+Benchmarks such as MathTutorBench~\citep{huang2025mathtutorbench} have advanced the measurement of open-ended pedagogical quality, yet most evaluations still adopt an instructor-centric view that treats the student as a generic receiver of instruction.
+Our work differs in two respects.
+First, we unify multiple tutoring modalities, including problem solving, question generation, writing, research, and guided learning, through a single, continuously evolving learner model rather than treating each as an independent capability.
+Second, we evaluate the resulting system from the \emph{student's} perspective, using first-person simulated dialogues grounded in individualized learner profiles rather than relying on instructor-defined rubrics alone.

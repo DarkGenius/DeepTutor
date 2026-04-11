@@ -148,4 +148,3 @@ dmypy.json
 # Benchmark cached data & results
 benchmark/iso_solve/data/
 benchmark/iso_solve/results/
-benchmark/iso_solve/report_trace/

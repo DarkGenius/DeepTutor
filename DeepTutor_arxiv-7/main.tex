@@ -1,0 +1,155 @@
+\documentclass{article}
+
+\usepackage[preprint]{techreport}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[colorlinks=true,linkcolor=red,citecolor=green!50!black,urlcolor=blue]{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage[table]{xcolor}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{pifont}
+\usepackage{multirow}
+\usepackage{stfloats}
+\usepackage{listings}
+\usepackage{mdframed}
+\usepackage{subcaption}
+\usepackage{wrapfig}
+\usepackage{fontawesome5}
+\usepackage[skins,breakable]{tcolorbox}
+
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{6pt}
+\setlength{\belowcaptionskip}{2pt}
+
+\definecolor{hlcol}{HTML}{FFF4CC}
+\newcolumntype{g}{>{\columncolor{gray!15}}c}
+
+\lstdefinestyle{promptstyle}{
+  backgroundcolor=\color{gray!6},
+  frame=single,
+  rulecolor=\color{gray!45},
+  basicstyle=\fontsize{7.5pt}{9pt}\selectfont\ttfamily,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  xleftmargin=6pt,
+  xrightmargin=6pt,
+  aboveskip=5pt,
+  belowskip=5pt,
+  captionpos=b,
+}
+\lstset{style=promptstyle}
+
+\definecolor{boxaccent}{HTML}{4A7FB5}
+
+% Intro highlight box: colored top rule + thin frame
+\mdfdefinestyle{layerbox}{
+  backgroundcolor=gray!3,
+  linecolor=gray!35,
+  linewidth=0.5pt,
+  roundcorner=1.5pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  skipabove=8pt,
+  skipbelow=8pt,
+  topline=true,
+  splittopskip=12pt,
+  frametitlebackgroundcolor=boxaccent!10,
+}
+
+% Design principle box: light accent background, no border
+\mdfdefinestyle{principlebox}{
+  backgroundcolor=boxaccent!4,
+  linecolor=boxaccent!30,
+  linewidth=0.4pt,
+  roundcorner=1.5pt,
+  innerleftmargin=9pt,
+  innerrightmargin=9pt,
+  innertopmargin=6pt,
+  innerbottommargin=6pt,
+  skipabove=4pt,
+  skipbelow=4pt,
+}
+
+% Paper-style highlight box (parameterised accent colour)
+\definecolor{princteal}{HTML}{2A9D8F}
+\definecolor{princlavender}{HTML}{7B68AE}
+
+\newtcolorbox{paperbox}[1][boxaccent]{
+  enhanced, breakable,
+  colback=#1!4,
+  colframe=#1!22,
+  boxrule=0.4pt,
+  arc=1.5pt,
+  left=10pt, right=10pt,
+  top=8pt, bottom=8pt,
+  borderline north={1.5pt}{0pt}{#1!55},
+  before skip=6pt, after skip=6pt,
+}
+
+\customnotice{Technical Report. Work in progress, \href{https://github.com/HKUDS/DeepTutor}{latest codes}.}
+
+\title{\raisebox{-0.2\height}{\includegraphics[height=1.4em]{figures/logo.png}}\hspace{0.25em}DeepTutor: Towards Agentic Personalized Tutoring}
+
+\author{
+  Bingxi Zhao\textsuperscript{1,2}\thanks{Equal contribution.} \quad
+  Jiahao Zhang\textsuperscript{1}$^*$ \quad
+  Xubin Ren\textsuperscript{1} \quad
+  Zirui Guo\textsuperscript{1} \\
+  \bfseries Tianzhe Chu\textsuperscript{1} \quad
+  Yi Ma\textsuperscript{1} \quad
+  Chao Huang\textsuperscript{1}\thanks{Corresponding author.} \\[4pt]
+  \textsuperscript{1}University of Hong Kong \qquad
+  \textsuperscript{2}Beijing Jiaotong University \\
+  \texttt{\{bingxizhao39, chaohuang75\}@gmail.com} \\[2pt]
+  \faGithub~\url{https://github.com/HKUDS/DeepTutor}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+% Education is one of the most promising real-world applications for Large Language Models (LLMs).
+% However, conventional tutoring systems rely on static pre-training knowledge that lacks adaptation to individual learners, while existing RAG-augmented systems fall short in delivering personalized, guided feedback.
+% To bridge this gap, we present \textsc{DeepTutor}, an agent-native open-source framework for personalized tutoring, where every tutoring feature shares a common personalization substrate.
+% We propose a hybrid personalization engine that couples static knowledge grounding with a dynamic multi-resolution memory, distilling interaction history into a continuously evolving learner profile.
+% Moreover, we construct a closed tutoring loop that bidirectionally couples citation-grounded problem solving with difficulty-calibrated question generation.
+% The same personalization substrate further supports collaborative writing, multi-agent deep research, and interactive guided learning, enabling cross-modality coherence.
+% To move beyond reactive interfaces, we introduce \textsc{TutorBot}, a proactive multi-agent layer that deploys tutoring capabilities through extensible skills and unified multi-channel access, providing a consistent experience across platforms.
+% To better evaluate such a tutoring system, we construct \textsc{TutorBench}, a student-centric benchmark with source-grounded learner profiles, together with a first-person interactive protocol that measures adaptive tutoring from the learner's perspective.
+% We further evaluate foundational agentic reasoning abilities across five authoritative benchmarks.
+% Experiments show that \textsc{DeepTutor} improves personalized tutoring quality while maintaining general agentic reasoning abilities.
+% We hope \textsc{DeepTutor} provides unique insights into next-generation tutoring systems for the community.
+Education represents one of the most promising real-world applications for Large Language Models (LLMs). However, conventional tutoring systems rely on static pre-training knowledge that lacks adaptation to individual learners, while existing RAG-augmented systems fall short in delivering personalized, guided feedback. To bridge this gap, we present \textsc{DeepTutor}, an agent-native open-source framework for personalized tutoring where every feature shares a common personalization substrate. We propose a hybrid personalization engine that couples static knowledge grounding with dynamic multi-resolution memory, distilling interaction history into a continuously evolving learner profile. Moreover, we construct a closed tutoring loop that bidirectionally couples citation-grounded problem solving with difficulty-calibrated question generation. The personalization substrate further supports collaborative writing, multi-agent deep research, and interactive guided learning, enabling cross-modality coherence. To move beyond reactive interfaces, we introduce \textsc{TutorBot}, a proactive multi-agent layer that deploys tutoring capabilities through extensible skills and unified multi-channel access, providing consistent experience across platforms. To better evaluate such tutoring systems, we construct \textsc{TutorBench}, a student-centric benchmark with source-grounded learner profiles and a first-person interactive protocol that measures adaptive tutoring from the learner's perspective. We further evaluate foundational agentic reasoning abilities across five authoritative benchmarks. Experiments show that \textsc{DeepTutor} improves personalized tutoring quality while maintaining general agentic reasoning abilities. We hope \textsc{DeepTutor} provides unique insights into next-generation AI-powered and personalized tutoring systems for the community.
+\end{abstract}
+
+\input{sections/intro}
+\input{sections/related}
+\input{sections/overview}
+\input{sections/foundation}
+\input{sections/tutorbot}
+\input{sections/evaluation}
+\input{sections/conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

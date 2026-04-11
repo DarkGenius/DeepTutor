@@ -1,0 +1,276 @@
+\relax 
+\providecommand\zref@newlabel[2]{}
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{chu-etal-2025-llm,letourneau2025systematicreviewaidriven}
+\citation{yao2023reactsynergizingreasoningacting,wang2024survey}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Comparison between prior LLM products with \textsc  {DeepTutor}. Conventional LLM tutors rely on generic priors, producing answers or exercises that may mismatch the learner's syllabus and proficiency, while \textsc  {DeepTutor} grounds both problem solving and question generation in the learner's knowledge base and diagnosed weaknesses.}}{2}{figure.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:compare}{{1}{2}{Comparison between prior LLM products with \textsc {DeepTutor}. Conventional LLM tutors rely on generic priors, producing answers or exercises that may mismatch the learner's syllabus and proficiency, while \textsc {DeepTutor} grounds both problem solving and question generation in the learner's knowledge base and diagnosed weaknesses}{figure.caption.2}{}}
+\citation{schick2024toolformer}
+\citation{yao2023reactsynergizingreasoningacting}
+\citation{zhao2025llmbasedagenticreasoningframeworks,wu-etal-2025-agentic,li2025intheflowagenticoptimizationeffective}
+\citation{chen2026iterresearch}
+\citation{tan-etal-2025-prospect}
+\citation{li-etal-2025-hello,cho-etal-2022-personalized}
+\citation{li2025surveypersonalizationragagent,guo2025raganythingallinoneragframework}
+\citation{wang2024agentworkflowmemory}
+\citation{packer2023memgpt}
+\citation{qin2025himem}
+\citation{yang2025gmemory}
+\citation{corbett1994knowledge}
+\citation{piech2015deep,zhang2017dkvmn,ghosh2020akt}
+\citation{park2024empoweringpersonalizedlearning}
+\citation{wang2025llmpoweredmultiagentframeworkgoaloriented}
+\citation{xu2025opentutorai}
+\citation{chen2026parld}
+\citation{liu2025tutorllm}
+\citation{dinucujianu2025pedagogy}
+\citation{huang2025mathtutorbench}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{3}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{3}{Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Tool-Augmented LLM Agents.}{3}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Personalization and Memory in LLMs.}{3}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{AI for Education.}{3}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}DeepTutor Architecture}{3}{section.3}\protected@file@percent }
+\newlabel{sec:overview}{{3}{3}{DeepTutor Architecture}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Design Principles}{4}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:principles}{{3.1}{4}{Design Principles}{subsection.3.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Principle 1: Shared Personalization as the Unifying Substrate.}{4}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Principle 2: Reusable Agentic Workflows over Monolithic Features.}{4}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Principle 3: Proactive Agency with Unified Context.}{4}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Agent-Native Infrastructure}{4}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:infrastructure}{{3.2}{4}{Agent-Native Infrastructure}{subsection.3.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Common Runtime for Extensible Workflows. }{4}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Unified Context and Event-Driven Streaming. }{4}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Convergent Entry Points. }{4}{section*.11}\protected@file@percent }
+\citation{wang2024mineruopensourcesolutionprecise}
+\citation{guo2025raganythingallinoneragframework}
+\citation{cormack2009reciprocal}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Overview of the personalization substrate and the foundational tutoring loop. A hybrid engine fuses static knowledge grounding (center) with dynamic personal memory (bottom). Problem solving (left, stages {\fontfamily  {pzd}\fontencoding  {U}\fontseries  {m}\fontshape  {n}\selectfont  \char 172}--{\fontfamily  {pzd}\fontencoding  {U}\fontseries  {m}\fontshape  {n}\selectfont  \char 174}) and question generation (right, stages {\fontfamily  {pzd}\fontencoding  {U}\fontseries  {m}\fontshape  {n}\selectfont  \char 175}--{\fontfamily  {pzd}\fontencoding  {U}\fontseries  {m}\fontshape  {n}\selectfont  \char 176}) form a closed cycle: both pipelines read from and write back to the shared learner profile.}}{5}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:overview}{{2}{5}{Overview of the personalization substrate and the foundational tutoring loop. A hybrid engine fuses static knowledge grounding (center) with dynamic personal memory (bottom). Problem solving (left, stages \ding {172}--\ding {174}) and question generation (right, stages \ding {175}--\ding {176}) form a closed cycle: both pipelines read from and write back to the shared learner profile}{figure.caption.12}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Personalized Agentic Tutoring}{5}{section.4}\protected@file@percent }
+\newlabel{sec:responsive}{{4}{5}{Personalized Agentic Tutoring}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}The Personalization Substrate}{5}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:personalization}{{4.1}{5}{The Personalization Substrate}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}Static Knowledge Grounding}{5}{subsubsection.4.1.1}\protected@file@percent }
+\newlabel{sec:rag}{{4.1.1}{5}{Static Knowledge Grounding}{subsubsection.4.1.1}{}}
+\citation{packer2023memgpt,qin2025himem,yang2025gmemory}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2}Dynamic Personal Memory: The Trace Forest}{6}{subsubsection.4.1.2}\protected@file@percent }
+\newlabel{sec:memory}{{4.1.2}{6}{Dynamic Personal Memory: The Trace Forest}{subsubsection.4.1.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.3}Profile Construction and Injection}{6}{subsubsection.4.1.3}\protected@file@percent }
+\newlabel{sec:injection}{{4.1.3}{6}{Profile Construction and Injection}{subsubsection.4.1.3}{}}
+\citation{yao2023reactsynergizingreasoningacting}
+\citation{wood1976role}
+\citation{yao2023reactsynergizingreasoningacting,wu-etal-2025-agentic}
+\citation{spiliopoulou2025playfavorites}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Closing the Tutoring Loop}{7}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:loop}{{4.2}{7}{Closing the Tutoring Loop}{subsection.4.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Why two pipelines, and why coupled?}{7}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Personalized Problem Solving.}{7}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Personalized Question Generation.}{7}{section*.15}\protected@file@percent }
+\newlabel{sec:cycle}{{4.2}{7}{The Closed-Loop Dynamic}{section*.16}{}}
+\@writefile{toc}{\contentsline {paragraph}{The Closed-Loop Dynamic.}{7}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Beyond Q\&A: Cognitive Extension across Knowledge Modalities}{7}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:cognitive_ext}{{4.3}{7}{Beyond Q\&A: Cognitive Extension across Knowledge Modalities}{subsection.4.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Knowledge Expression: Collaborative Writing.}{7}{section*.18}\protected@file@percent }
+\citation{freeman2014active}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Three cognitive extensions, \emph  {expression}, \emph  {synthesis}, and \emph  {absorption}, extend the tutoring loop into a broader support cycle. All three share the same personalization substrate, so progress in any modality informs the others.}}{8}{figure.caption.17}\protected@file@percent }
+\newlabel{fig:extension}{{3}{8}{Three cognitive extensions, \emph {expression}, \emph {synthesis}, and \emph {absorption}, extend the tutoring loop into a broader support cycle. All three share the same personalization substrate, so progress in any modality informs the others}{figure.caption.17}{}}
+\@writefile{toc}{\contentsline {paragraph}{Knowledge Synthesis: Multi-Agent Deep Research.}{8}{section*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Knowledge Absorption: Interactive Guided Learning.}{8}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Cross-Modality Coherence.}{8}{section*.21}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces TutorBot architecture. Four layers from top to bottom: a \emph  {multi-channel interface} connecting twelve messaging platforms through a unified bus; an \emph  {autonomous agent core} with a customizable persona (Soul) and extensible skills; a \emph  {persistent memory system} with automatic consolidation; and the \emph  {shared DeepTutor runtime} exposing the full tutoring stack as reusable services.}}{9}{figure.caption.22}\protected@file@percent }
+\newlabel{fig:tutorbot}{{4}{9}{TutorBot architecture. Four layers from top to bottom: a \emph {multi-channel interface} connecting twelve messaging platforms through a unified bus; an \emph {autonomous agent core} with a customizable persona (Soul) and extensible skills; a \emph {persistent memory system} with automatic consolidation; and the \emph {shared DeepTutor runtime} exposing the full tutoring stack as reusable services}{figure.caption.22}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Proactive Tutoring}{9}{section.5}\protected@file@percent }
+\newlabel{sec:proactive}{{5}{9}{Proactive Tutoring}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}From Capability Execution to Autonomous Agency}{9}{subsection.5.1}\protected@file@percent }
+\newlabel{sec:agentloop}{{5.1}{9}{From Capability Execution to Autonomous Agency}{subsection.5.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Unbounded Extensibility via Skills}{10}{subsection.5.2}\protected@file@percent }
+\newlabel{sec:skills}{{5.2}{10}{Unbounded Extensibility via Skills}{subsection.5.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Collective Intelligence via Multi-Bot Parallelism}{10}{subsection.5.3}\protected@file@percent }
+\newlabel{sec:multibot}{{5.3}{10}{Collective Intelligence via Multi-Bot Parallelism}{subsection.5.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Personality and Specialization via Soul Templates.}{10}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Proactive Autonomy.}{10}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Self-Evolution.}{10}{section*.25}\protected@file@percent }
+\citation{chu-etal-2025-llm,kurdi2020systematic}
+\citation{smith1993misconceptions,shute2008focus}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Construction pipeline of \textsc  {TutorBench}. Each entry contains a learner profile, source-grounded knowledge gaps, and an interactive tutoring task.}}{11}{figure.caption.27}\protected@file@percent }
+\newlabel{fig:datagen}{{5}{11}{Construction pipeline of \textsc {TutorBench}. Each entry contains a learner profile, source-grounded knowledge gaps, and an interactive tutoring task}{figure.caption.27}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Unified Context across Channels and Devices}{11}{subsection.5.4}\protected@file@percent }
+\newlabel{sec:channels}{{5.4}{11}{Unified Context across Channels and Devices}{subsection.5.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Discussion.}{11}{section*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Evaluation}{11}{section.6}\protected@file@percent }
+\newlabel{sec:evaluation}{{6}{11}{Evaluation}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}TutorBench: A Student-Centric Benchmark}{11}{subsection.6.1}\protected@file@percent }
+\newlabel{sec:tutorbench}{{6.1}{11}{TutorBench: A Student-Centric Benchmark}{subsection.6.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Construction Pipeline.}{11}{section*.28}\protected@file@percent }
+\citation{zheng2023judging,huang2025mathtutorbench}
+\citation{dinucujianu2025pedagogy,scarlatos2026simulatedstudents,pan2025tutorup}
+\citation{wei2022chain}
+\citation{madaan2024selfrefine}
+\citation{yao2023reactsynergizingreasoningacting}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Main results on \textsc  {TutorBench}. Upper block: baselines. Lower block: \textsc  {DeepTutor} with ablation variants. \textit  {Avg}~is the group mean; OQ~is the \underline  {O}verall \underline  {Q}uality across all ten metrics; $\Delta $\%~is relative improvement over the Naive Tutor baseline. All metrics are 1--5~$\uparrow $. \textbf  {Bold}~=~best; \underline  {underline}~=~second best.}}{12}{table.caption.33}\protected@file@percent }
+\newlabel{tab:interactive_all}{{1}{12}{Main results on \textsc {TutorBench}. Upper block: baselines. Lower block: \textsc {DeepTutor} with ablation variants. \textit {Avg}~is the group mean; OQ~is the \underline {O}verall \underline {Q}uality across all ten metrics; $\Delta $\%~is relative improvement over the Naive Tutor baseline. All metrics are 1--5~$\uparrow $. \textbf {Bold}~=~best; \underline {underline}~=~second best}{table.caption.33}{}}
+\@writefile{toc}{\contentsline {paragraph}{Statistics.}{12}{section*.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}First-Person Interactive Evaluation}{12}{subsection.6.2}\protected@file@percent }
+\newlabel{sec:interactive_eval}{{6.2}{12}{First-Person Interactive Evaluation}{subsection.6.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Metrics.}{12}{section*.30}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Protocol.}{12}{section*.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Baselines.}{12}{section*.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Results.}{12}{section*.34}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Cross-Domain Generalization.}{12}{section*.35}\protected@file@percent }
+\citation{phan2025hle}
+\citation{rein2024gpqa}
+\citation{white2025livebench}
+\citation{mialon2024gaia}
+\citation{artificialanalysis2025lcr}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces General problem-solving \textbf  {pass@1 scores} across five backbone models. Each pair of rows compares the bare backbone against the same backbone augmented with \textsc  {DeepTutor}'s pipeline. $^*$We utilize a fixed subset with 500-questions. $^{**}$GPQA-Diamond. $^{***}$We use the reasoning subset. $^\dagger $GAIA scores are reported per difficulty level (L1--L3).}}{13}{table.caption.36}\protected@file@percent }
+\newlabel{tab:generalization}{{2}{13}{General problem-solving \textbf {pass@1 scores} across five backbone models. Each pair of rows compares the bare backbone against the same backbone augmented with \textsc {DeepTutor}'s pipeline. $^*$We utilize a fixed subset with 500-questions. $^{**}$GPQA-Diamond. $^{***}$We use the reasoning subset. $^\dagger $GAIA scores are reported per difficulty level (L1--L3)}{table.caption.36}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}General Problem-Solving Ability}{13}{subsection.6.3}\protected@file@percent }
+\newlabel{sec:generalization}{{6.3}{13}{General Problem-Solving Ability}{subsection.6.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Ablation Study}{13}{subsection.6.4}\protected@file@percent }
+\newlabel{sec:ablation}{{6.4}{13}{Ablation Study}{subsection.6.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Per-metric impact of removing RAG (left) and Memory (right). Black decagon: full \textsc  {DeepTutor}; shaded region: ablated variant. Labels highlight the three largest drops (\textcolor [RGB]{39,123,255}{1st}, \textcolor [RGB]{255,74,234}{2nd}, \textcolor [RGB]{147,92,255}{3rd}).}}{14}{figure.caption.37}\protected@file@percent }
+\newlabel{fig:ablation_radar}{{6}{14}{Per-metric impact of removing RAG (left) and Memory (right). Black decagon: full \textsc {DeepTutor}; shaded region: ablated variant. Labels highlight the three largest drops (\textcolor [RGB]{39,123,255}{1st}, \textcolor [RGB]{255,74,234}{2nd}, \textcolor [RGB]{147,92,255}{3rd})}{figure.caption.37}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{14}{section.7}\protected@file@percent }
+\newlabel{sec:conclusion}{{7}{14}{Conclusion}{section.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{Broader Implications.}{14}{section*.38}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Future Work.}{14}{section*.39}\protected@file@percent }
+\bibstyle{plainnat}
+\bibdata{references}
+\bibcite{chen2026iterresearch}{{1}{2026}{{Chen et~al.}}{{Chen, Qiao, Chen, Yu, Xu, Zhao, Song, Yin, Yin, Zhang, Li, Liao, Jiang, Xie, Huang, and Zhou}}}
+\bibcite{chen2025towardsreasoningera}{{2}{2025}{{Chen et~al.}}{{Chen, Qin, Liu, Peng, Guan, Wang, Hu, Zhou, Gao, and Che}}}
+\bibcite{cho-etal-2022-personalized}{{3}{2022}{{Cho et~al.}}{{Cho, Wang, Takahashi, and Saito}}}
+\bibcite{chu-etal-2025-llm}{{4}{2025}{{Chu et~al.}}{{Chu, Wang, Xie, Zhu, Yan, Ye, Zhong, Hu, Liang, Yu, and Wen}}}
+\bibcite{corbett1994knowledge}{{5}{1994}{{Corbett and Anderson}}{{}}}
+\bibcite{cormack2009reciprocal}{{6}{2009}{{Cormack et~al.}}{{Cormack, Clarke, and Buettcher}}}
+\bibcite{dinucujianu2025pedagogy}{{7}{2025}{{Dinucu-Jianu et~al.}}{{Dinucu-Jianu, Macina, Daheim, Hakimi, Gurevych, and Sachan}}}
+\bibcite{freeman2014active}{{8}{2014}{{Freeman et~al.}}{{Freeman, Eddy, McDonough, Smith, Okoroafor, Jordt, and Wenderoth}}}
+\bibcite{ghosh2020akt}{{9}{2020}{{Ghosh et~al.}}{{Ghosh, Heffernan, and Lan}}}
+\bibcite{guo2025deepseekr1}{{10}{2025{a}}{{Guo et~al.}}{{Guo, Yang, Zhang, Song, Wang, Zhu, Xu, Zhang, Ma, Bi, et~al.}}}
+\bibcite{guo2025raganythingallinoneragframework}{{11}{2025{b}}{{Guo et~al.}}{{Guo, Ren, Xu, Zhang, and Huang}}}
+\bibcite{xu2025opentutorai}{{12}{2026}{{Hajji et~al.}}{{Hajji, Baha, Dakir, Fadili, and Es-Saady}}}
+\bibcite{hu2025memory}{{13}{2025}{{Hu et~al.}}{{Hu, Liu, Yue, Zhang, Liu, Zhu, Lin, Guo, Dou, Xi, et~al.}}}
+\bibcite{jain2025livecodebench}{{14}{2025}{{Jain et~al.}}{{Jain, Han, Gu, Li, Yan, Zhang, Wang, Solar-Lezama, Sen, and Stoica}}}
+\bibcite{kim2025openvla}{{15}{2024}{{Kim et~al.}}{{Kim, Pertsch, Karamcheti, Xiao, Balakrishna, Nair, Rafailov, Foster, Sanketi, Vuong, Kollar, Burchfiel, Tedrake, Sadigh, Levine, Liang, and Finn}}}
+\bibcite{kurdi2020systematic}{{16}{2020}{{Kurdi et~al.}}{{Kurdi, Leo, Parsia, Sattler, and Al-Emari}}}
+\bibcite{letourneau2025systematicreviewaidriven}{{17}{2025}{{L{\'e}tourneau et~al.}}{{L{\'e}tourneau, Deslandes~Martineau, Charland, Karran, Boasen, and L{\'e}ger}}}
+\bibcite{li-etal-2025-hello}{{18}{2025{a}}{{Li et~al.}}{{Li, Yang, Zhang, Deng, Wang, and Chua}}}
+\bibcite{li2025surveypersonalizationragagent}{{19}{2025{b}}{{Li et~al.}}{{Li, Jia, Xu, Wen, Zhang, Zhang, Wang, Wang, Du, Li, et~al.}}}
+\bibcite{liu2025tutorllm}{{20}{2025{c}}{{Li et~al.}}{{Li, Wang, Gu, Yazdanpanah, Shi, Cristea, Kiden, and Stein}}}
+\bibcite{li2025intheflowagenticoptimizationeffective}{{21}{2025{d}}{{Li et~al.}}{{Li, Zhang, Han, Liu, Xie, Zhang, Choi, Zou, and Lu}}}
+\bibcite{huang2025mathtutorbench}{{22}{2025}{{Macina et~al.}}{{Macina, Daheim, Hakimi, Kapur, Gurevych, and Sachan}}}
+\bibcite{madaan2024selfrefine}{{23}{2023}{{Madaan et~al.}}{{Madaan, Tandon, Gupta, Hallinan, Gao, Wiegreffe, Alon, Dziri, Prabhumoye, Yang, et~al.}}}
+\bibcite{mialon2024gaia}{{24}{2024}{{Mialon et~al.}}{{Mialon, Fourrier, Wolf, LeCun, and Scialom}}}
+\bibcite{packer2023memgpt}{{25}{2023}{{Packer et~al.}}{{Packer, Wooders, Lin, Fang, Patil, Stoica, and Gonzalez}}}
+\bibcite{pan2025tutorup}{{26}{2025}{{Pan et~al.}}{{Pan, Schmucker, Garcia Bulle~Bueno, Llanes, Albo~Alarc{\'o}n, Zhu, Teo, and Xia}}}
+\bibcite{park2024empoweringpersonalizedlearning}{{27}{2024}{{Park et~al.}}{{Park, Kim, Lee, Kwon, and Kim}}}
+\bibcite{phan2025hle}{{28}{2026}{{Phan et~al.}}{{Phan, Gatti, Li, Khoja, Kim, Ren, Hausenloy, Zhang, Mazeika, Hendrycks, Han, Hu, Zhang, Zhang, Shaaban, Ling, Shi, Choi, Agrawal, Chopra, Nattanmai, McKellips, Cheraku, Suhail, Luo, Deng, Luo, Zhang, Jindel, Paek, Halevy, Baranov, Liu, Avadhanam, Zhang, Cheng, Ma, Fu, Do, Lass, Yang, Sunkari, Bharath, Ai, Leung, Agrawal, Zhou, Chen, Kalpathi, Xu, Wang, Xiao, Maung, Lee, Yang, Yue, Zhao, Yoon, Sun, Singh, Peng, Osbey, Wang, Echeazu, Wu, Patel, Kulkarni, Sundarapandiyan, Le, Nasim, Yalam, Kasamsetty, Samal, Sun, Shah, Saha, Zhang, Nguyen, Nagumalli, Wang, Wu, Telluri, Yue, Wang, Dodonov, Nguyen, Lee, Anderson, Doroshenko, Stokes, Mahmood, Pokutnyi, Iskra, Wang, Levin, Kazakov, Feng, Feng, Zhao, Yu, Gangal, Zou, Wang, Popov, Gerbicz, Galgon, Schmitt, Yeadon, Lee, Sauers, Sanchez, Giska, Roth, Riis, Utpala, Burns, Goshu, Naiya, Agu, Giboney, Cheatom, Fournier-Facio, Crowson, Finke, Cheng, Zampese, Hoerr, Nandor, Park, Gehrunger, Cai, McCarty, Garretson, Taylor, Sileo, Ren, Qazi, Li, Nam, Wydallis, Arkhipov, Shi, Bacho, Willcocks, Cao, Motwani, de~Oliveira~Santos, Veith, Vendrow, Cojoc, Zenitani, Robinson, Tang, Li, Vendrow, Fraga, Kuchkin, Maksimov, Marion, Efremov, Lynch, Liang, Mikov, Gritsevskiy, Guillod, Demir, Martinez, Pageler, Zhou, Soori, Press, Tang, Rissone, Green, Br{\"u}ssel, Twayana, Dieuleveut, Imperial, Prabhu, Yang, Crispino, Rao, Zvonkine, Loiseau, Kalinin, Lukas, Manolescu, Stambaugh, Mishra, Hogg, Bosio, Coppola, Salazar, Jin, Sayous, Ivanov, Schwaller, Senthilkumar, Bran, Algaba, Van~den Houte, Van Der~Sypt, Verbeken, Noever, Kopylov, Myklebust, Li, Schut, Zheltonozhskii, Yuan, Lim, Stanley, Yang, Maar, Wykowski, Oller, Sahu, Ardito, Hu, Kamdoum, Jin, Vilchis, Zu, Lackner, Koppel, Sun, Antonenko, Chern, Zhao, Arsene, Cavanagh, Li, Shen, Crisostomi, Zhang, Dehghan, Ivanov, Perrella, Kaparov, Zang, Sucholutsky, Kharlamova, Orel, Poritski, Ben-David, Berger, Whitfill, Foster, Munro, Ho, Sivarajan, Hava, Kuchkin, Holmes, Rodriguez-Romero, Sommerhage, Zhang, Moat, Schneider, Kazibwe, Clarke, Kim, Dias, Fish, Elser, Kreiman, Vilchis, Klose, Anantheswaran, Zweiger, Rawal, Li, Nguyen, Daans, Heidinger, Radionov, Rozho{\v n}, Ginis, Stump, Cohen, Po{\'s}wiata, Tkadlec, Goldfarb, Wang, Padlewski, Barzowski, Montgomery, Stendall, Tucker-Foltz, Stade, Rogers, Goertzen, Grabb, Shukla, Givr{\'e}, Ambay, Sen, for AI~Safety, AI, and Consortium}}}
+\bibcite{piech2015deep}{{29}{2015}{{Piech et~al.}}{{Piech, Bassen, Huang, Ganguli, Sahami, Guibas, and Sohl-Dickstein}}}
+\bibcite{rein2024gpqa}{{30}{2024}{{Rein et~al.}}{{Rein, Hou, Stickland, Petty, Pang, Dirani, Michael, and Bowman}}}
+\bibcite{scarlatos2026simulatedstudents}{{31}{2026}{{Scarlatos et~al.}}{{Scarlatos, Lee, Woodhead, and Lan}}}
+\bibcite{schick2024toolformer}{{32}{2023}{{Schick et~al.}}{{Schick, Dwivedi-Yu, Dess{\`\i }, Raileanu, Lomeli, Hambro, Zettlemoyer, Cancedda, and Scialom}}}
+\bibcite{shute2008focus}{{33}{2008}{{Shute}}{{}}}
+\bibcite{smith1993misconceptions}{{34}{1994}{{Smith~III et~al.}}{{Smith~III, DiSessa, and Roschelle}}}
+\bibcite{spiliopoulou2025playfavorites}{{35}{2025}{{Spiliopoulou et~al.}}{{Spiliopoulou, Fogliato, Burnsky, Soliman, Ma, Horwood, and Ballesteros}}}
+\bibcite{tan-etal-2025-prospect}{{36}{2025}{{Tan et~al.}}{{Tan, Yan, Hsu, Han, Wang, Le, Song, Chen, Palangi, Lee, et~al.}}}
+\bibcite{artificialanalysis2025lcr}{{37}{2025}{{Team}}{{}}}
+\bibcite{wang2024mineruopensourcesolutionprecise}{{38}{2024{a}}{{Wang et~al.}}{{Wang, Xu, Zhao, Ouyang, Wu, Zhao, Xu, Liu, Qu, Shang, et~al.}}}
+\bibcite{wang2024yolov9}{{39}{2024{b}}{{Wang et~al.}}{{Wang, Yeh, and Mark~Liao}}}
+\bibcite{wang2024survey}{{40}{2024{c}}{{Wang et~al.}}{{Wang, Ma, Feng, Zhang, Yang, Zhang, Chen, Tang, Chen, Lin, et~al.}}}
+\bibcite{wang2025llmpoweredmultiagentframeworkgoaloriented}{{41}{2025{a}}{{Wang et~al.}}{{Wang, Zhan, Lian, Hu, Yuan, Zhang, Xie, and Xiong}}}
+\bibcite{wang2024agentworkflowmemory}{{42}{2025{b}}{{Wang et~al.}}{{Wang, Mao, Fried, and Neubig}}}
+\bibcite{wei2022chain}{{43}{2022}{{Wei et~al.}}{{Wei, Wang, Schuurmans, Bosma, Xia, Chi, Le, Zhou, et~al.}}}
+\bibcite{white2025livebench}{{44}{2025}{{White et~al.}}{{White, Dooley, Roberts, Pal, Feuer, Jain, Shwartz-Ziv, Jain, Saifullah, Dey, Shubh-Agrawal, Sandha, Naidu, Hegde, LeCun, Goldstein, Neiswanger, and Goldblum}}}
+\bibcite{wood1976role}{{45}{1976}{{Wood et~al.}}{{Wood, Bruner, and Ross}}}
+\bibcite{wu-etal-2025-agentic}{{46}{2025}{{Wu et~al.}}{{Wu, Zhu, Liu, Xu, and Jin}}}
+\bibcite{chen2026parld}{{47}{2026}{{Yao et~al.}}{{Yao, Chang, Gao, and Liu}}}
+\bibcite{yao2023reactsynergizingreasoningacting}{{48}{2023}{{Yao et~al.}}{{Yao, Zhao, Yu, Du, Shafran, Narasimhan, and Cao}}}
+\bibcite{yang2025gmemory}{{49}{2025}{{Zhang et~al.}}{{Zhang, Fu, Wang, Wan, Yu, and YAN}}}
+\bibcite{zhang2017dkvmn}{{50}{2017}{{Zhang et~al.}}{{Zhang, Shi, King, and Yeung}}}
+\bibcite{qin2025himem}{{51}{2026}{{Zhang et~al.}}{{Zhang, Yang, Tan, Deng, and Wang}}}
+\bibcite{zhao2025llmbasedagenticreasoningframeworks}{{52}{2025}{{Zhao et~al.}}{{Zhao, Foo, Hu, Theobalt, Rahmani, and Liu}}}
+\bibcite{zheng2023judging}{{53}{2023}{{Zheng et~al.}}{{Zheng, Chiang, Sheng, Zhuang, Wu, Zhuang, Lin, Li, Li, Xing, et~al.}}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}System Algorithms}{19}{appendix.A}\protected@file@percent }
+\newlabel{app:algorithms}{{A}{19}{System Algorithms}{appendix.A}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Closed-Loop Tutoring}{19}{subsection.A.1}\protected@file@percent }
+\newlabel{app:algorithm}{{A.1}{19}{Closed-Loop Tutoring}{subsection.A.1}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Closed-Loop Personalized Tutoring}}{20}{algorithm.1}\protected@file@percent }
+\newlabel{alg:loop}{{1}{20}{Closed-Loop Personalized Tutoring}{algorithm.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}TutorBot Autonomous Agent Loop}{20}{subsection.A.2}\protected@file@percent }
+\newlabel{app:tutorbot}{{A.2}{20}{TutorBot Autonomous Agent Loop}{subsection.A.2}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces TutorBot Autonomous Agent Loop}}{21}{algorithm.2}\protected@file@percent }
+\newlabel{alg:tutorbot}{{2}{21}{TutorBot Autonomous Agent Loop}{algorithm.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Extended Evaluation Details}{21}{appendix.B}\protected@file@percent }
+\newlabel{app:eval}{{B}{21}{Extended Evaluation Details}{appendix.B}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}Evaluation Rubrics}{21}{subsection.B.1}\protected@file@percent }
+\newlabel{app:eval:rubrics}{{B.1}{21}{Evaluation Rubrics}{subsection.B.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Solve-Side Metrics.}{21}{section*.42}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Practice-Side Metrics.}{21}{section*.43}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Student Simulator}{21}{subsection.B.2}\protected@file@percent }
+\newlabel{app:eval:simulator}{{B.2}{21}{Student Simulator}{subsection.B.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces First-person interactive evaluation protocol. A student simulator initialized from a \textsc  {TutorBench} entry engages the tutoring system in multi-turn dialogue; the resulting transcript is scored against a personalized rubric by an independent judge.}}{22}{figure.caption.44}\protected@file@percent }
+\newlabel{fig:evaluation}{{7}{22}{First-person interactive evaluation protocol. A student simulator initialized from a \textsc {TutorBench} entry engages the tutoring system in multi-turn dialogue; the resulting transcript is scored against a personalized rubric by an independent judge}{figure.caption.44}{}}
+\newlabel{lst:simulator}{{1}{22}{Student Simulator System Prompt}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}{\ignorespaces Student Simulator System Prompt}}{22}{lstlisting.1}\protected@file@percent }
+\citation{wei2022chain}
+\citation{madaan2024selfrefine}
+\citation{yao2023reactsynergizingreasoningacting}
+\@writefile{toc}{\contentsline {paragraph}{Dynamic Gap Pacing.}{23}{section*.45}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Baseline Definitions}{23}{subsection.B.3}\protected@file@percent }
+\newlabel{app:eval:baselines}{{B.3}{23}{Baseline Definitions}{subsection.B.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Notation.}{23}{section*.46}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Naive Tutor.}{23}{section*.47}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Naive Tutor}}{23}{algorithm.3}\protected@file@percent }
+\newlabel{alg:naive}{{3}{23}{Naive Tutor}{algorithm.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{CoT Tutor.}{23}{section*.48}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {4}{\ignorespaces CoT Tutor}}{23}{algorithm.4}\protected@file@percent }
+\newlabel{alg:cot}{{4}{23}{CoT Tutor}{algorithm.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Self-Refine Tutor.}{23}{section*.49}\protected@file@percent }
+\citation{phan2025hle}
+\citation{rein2024gpqa}
+\citation{white2025livebench}
+\citation{mialon2024gaia}
+\citation{artificialanalysis2025lcr}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {5}{\ignorespaces Self-Refine Tutor}}{24}{algorithm.5}\protected@file@percent }
+\newlabel{alg:selfrefine}{{5}{24}{Self-Refine Tutor}{algorithm.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{ReAct Tutor.}{24}{section*.50}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {6}{\ignorespaces ReAct Tutor (single-round per turn)}}{24}{algorithm.6}\protected@file@percent }
+\newlabel{alg:react}{{6}{24}{ReAct Tutor (single-round per turn)}{algorithm.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.4}General Problem-Solving Setup}{24}{subsection.B.4}\protected@file@percent }
+\newlabel{app:eval:general}{{B.4}{24}{General Problem-Solving Setup}{subsection.B.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Public benchmarks used in the general problem-solving evaluation. $^\dagger $HLE uses a fixed 500-question subset; LiveBench uses the reasoning subset only.}}{24}{table.caption.51}\protected@file@percent }
+\newlabel{tab:benchmarks}{{3}{24}{Public benchmarks used in the general problem-solving evaluation. $^\dagger $HLE uses a fixed 500-question subset; LiveBench uses the reasoning subset only}{table.caption.51}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Backbone models and API sources for the general problem-solving evaluation.}}{24}{table.caption.52}\protected@file@percent }
+\newlabel{tab:backbones}{{4}{24}{Backbone models and API sources for the general problem-solving evaluation}{table.caption.52}{}}
+\@writefile{toc}{\contentsline {paragraph}{Evaluation Protocol.}{25}{section*.53}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Pipeline Configuration.}{25}{section*.54}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Per-benchmark pipeline configuration. \texttt  {done} and \texttt  {replan} are always available. Temperature is $0.0$ across all benchmarks.}}{25}{table.caption.55}\protected@file@percent }
+\newlabel{tab:pipeline_config}{{5}{25}{Per-benchmark pipeline configuration. \texttt {done} and \texttt {replan} are always available. Temperature is $0.0$ across all benchmarks}{table.caption.55}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Extended Experimental Results}{25}{appendix.C}\protected@file@percent }
+\newlabel{app:results}{{C}{25}{Extended Experimental Results}{appendix.C}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.1}Cross-Domain Breakdown}{25}{subsection.C.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Cross-domain breakdown of \textsc  {DeepTutor}'s interactive evaluation results. Solve-side quality is broadly stable; practice-side metrics show moderate domain-dependent variation.}}{25}{table.caption.56}\protected@file@percent }
+\newlabel{tab:domain}{{6}{25}{Cross-domain breakdown of \textsc {DeepTutor}'s interactive evaluation results. Solve-side quality is broadly stable; practice-side metrics show moderate domain-dependent variation}{table.caption.56}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.2}Full Metric Breakdown}{25}{subsection.C.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Full per-metric breakdown across all baselines and \textsc  {DeepTutor} variants. All values are 1--5 averages over the complete \textsc  {TutorBench} evaluation set.}}{25}{table.caption.57}\protected@file@percent }
+\newlabel{tab:ablation_full}{{7}{25}{Full per-metric breakdown across all baselines and \textsc {DeepTutor} variants. All values are 1--5 averages over the complete \textsc {TutorBench} evaluation set}{table.caption.57}{}}
+\citation{hu2025memory}
+\citation{guo2025deepseekr1}
+\citation{jain2025livecodebench}
+\citation{kim2025openvla}
+\citation{chen2025towardsreasoningera}
+\citation{wang2024yolov9}
+\@writefile{toc}{\contentsline {section}{\numberline {D}TutorBench Construction Details}{26}{appendix.D}\protected@file@percent }
+\newlabel{app:tutorbench}{{D}{26}{TutorBench Construction Details}{appendix.D}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.1}Source Material Inventory}{26}{subsection.D.1}\protected@file@percent }
+\newlabel{app:tutorbench:sources}{{D.1}{26}{Source Material Inventory}{subsection.D.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Textbook-Derived Sources}{26}{section*.58}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Research Paper Sources:}{26}{section*.59}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.2}Task Generation via Rejection Sampling}{26}{subsection.D.2}\protected@file@percent }
+\newlabel{app:tutorbench:task}{{D.2}{26}{Task Generation via Rejection Sampling}{subsection.D.2}{}}
+\gdef \@abspage@last{26}

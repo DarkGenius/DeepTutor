@@ -1,0 +1,52 @@
+\section{DeepTutor Architecture}
+\label{sec:overview}
+
+Engineering a personalized tutoring system necessitates a fundamental shift from session-constrained assistants to persistent, agentic companions.
+Current architectures often suffer from dimensional silos:
+traditional agents demonstrate multi-step reasoning yet lack persistent learner states; personalization engines accumulate history but remain decoupled from active tutoring pipelines; and educational platforms adapt to isolated prompts without a shared substrate to propagate context across diverse tasks and channels.
+
+\textsc{DeepTutor} synthesizes these fragmented capabilities into a unified architectural design. In this section, we first articulate the core design principles that anchor the system around cross-functional personalization (\S\ref{sec:principles}). We then detail the agent-native infrastructure that enables tutoring workflows and proactive agency to coexist and collaborate within a single, composable runtime (\S\ref{sec:infrastructure}).
+
+
+\subsection{Design Principles}
+\label{sec:principles}
+A robust personalized tutoring system must be \textit{pedagogically deep} to model individual learners, \textit{functionally broad} to span diverse knowledge modalities, and \textit{architecturally open} to accommodate emerging interfaces and autonomous behaviors. While addressing these demands in isolation is straightforward, the primary challenge lies in integrating them without letting the architecture degenerate into a fragmented collection of point solutions. We consolidate these requirements into three guiding design principles.
+
+\paragraph{Principle 1: Shared Personalization as the Unifying Substrate.}
+Systems often treat problem-solving, question generation, and research as decoupled states, causing the tutor to lose pedagogical context when a learner switches tasks. \textsc{DeepTutor} mitigates this by routing all workflows through a centralized personalization engine—comprising shared knowledge bases, the \emph{trace forest}, and a unified learner profile $\mathcal{D}$. Consequently, a weakness identified during problem-solving directly shapes the subsequent guided session, while insights from research refine the parameters of future question generation. The learner interacts with a cohesive, evolving intelligence rather than a fragmented toolkit.
+\paragraph{Principle 2: Reusable Agentic Workflows over Monolithic Features.}
+Architectures that hard-code pedagogical behaviors are inherently brittle and scale poorly. We instead adopt an agent-native design where tutoring functions—from writing assistance to deep research—are implemented as composable workflows atop a shared runtime for retrieval, reasoning, and personalization. Because these workflows inherit standardized context-propagation and delivery mechanisms by construction, extending the system with new modalities does not require re-engineering the underlying stack.
+\paragraph{Principle 3: Proactive Agency with Unified Context.}
+Autonomy provides value only if the learner’s state remains coherent across all entry points. In \textsc{DeepTutor}, proactive behavior is an architectural extension of the tutoring substrate rather than a separate product surface. The tutoring dimension formalizes the learner model and workflows, while the proactive dimension leverages them for autonomous, multi-platform engagement. Our objective is autonomy without context fragmentation: whether a student solves a problem via a web interface or receives a review reminder via Telegram, they engage with a singular, context-unified tutor.
+
+\subsection{Agent-Native Infrastructure}
+\label{sec:infrastructure}
+
+The design principles articulated above dictate a core implementation requirement: every workflow and interaction entry point must operate within a unified, shared runtime. This subsection details how \textsc{DeepTutor}’s infrastructure operationalizes this requirement to ensure architectural consistency.
+
+\paragraph{Common Runtime for Extensible Workflows. }To avoid redundant implementation across diverse interfaces or pedagogical tasks, \textsc{DeepTutor} centers execution on a uniform runtime that provides a suite of foundational services: retrieval-augmented generation (RAG), agentic reasoning, sandboxed code execution, memory access, and multi-agent orchestration. All tutoring behaviors—ranging from multi-stage problem solving to parallel deep research—are implemented as composable workflows atop this layer. By design, these workflows inherit standardized context-propagation mechanisms and a unified streaming protocol, ensuring functional parity across the system.
+\paragraph{Unified Context and Event-Driven Streaming. }A system-wide context structure encapsulates the complete state of each interaction turn, including session metadata, conversation history, tool registries, knowledge-base references, and the personalization signal $\mathcal{C}_{\text{mem}}$. This ensures that every agent, regardless of its specific entry point, operates on a coherent and synchronized learner model. Furthermore, all agent outputs are emitted as strongly-typed events via an asynchronous event bus. This decouples the core agent logic from the delivery layer, enabling diverse consumers to consume and render the same telemetry stream without custom adaptation.
+\paragraph{Convergent Entry Points. }A critical architectural consequence of this design is that every entry point including the web interface, CLI, programmatic SDK, and \textsc{TutorBot}~(\S\ref{sec:proactive}) converges on a single orchestrator. This convergence ensures that both the reactive tutoring pipelines and the proactive autonomous components described in the subsequent sections execute on the identical infrastructure, anchored by the same continuously evolving learner model.
+
+
+
+% % ------------------------------------------------------------
+% \subsection{Agent-Native Infrastructure}
+% \label{sec:infrastructure}
+% % ------------------------------------------------------------
+
+% The three principles above impose a concrete implementation requirement: every workflow and every entry point must share the same runtime.
+% This subsection describes how \textsc{DeepTutor}'s infrastructure realizes that requirement.
+
+% \paragraph{Shared Runtime for Extensible Workflows.}
+% Rather than reimplementing functionality for each interface or learning task, \textsc{DeepTutor} centers execution on a uniform runtime that provides retrieval, reasoning, code execution, memory access, and orchestration as common services.
+% All tutoring behaviors, from multi-stage problem solving to parallel deep research, are realized as reusable workflows over this layer and inherit the same context propagation and streaming protocol.
+
+% \paragraph{Unified Context and Streaming.}
+% A unified context structure encapsulates each turn's complete state, including session identity, conversation history, enabled tools, knowledge-base references, and the personalization context $\mathcal{C}_{\text{mem}}$.
+% This ensures that every agent, regardless of entry point, operates on the same personalization signal.
+% All agent output is emitted as typed events through an asynchronous event bus, decoupling agent logic from delivery and enabling any consumer, whether a web frontend, CLI, or messaging bot, to render the same stream without modification.
+
+% \paragraph{Convergent Entry Points.}
+% This design has a critical architectural consequence: every entry point, whether the web interface, CLI, programmatic SDK, or TutorBot~(\S\ref{sec:proactive}), converges on the same orchestrator and streams through the same event protocol.
+% The tutoring and proactive components described in the following sections therefore execute on the same infrastructure and are personalized by the same evolving learner model.
