@@ -4,13 +4,17 @@
 # This file provides orchestration for DeepTutor services
 #
 # Usage:
-#   Production:  docker compose up -d
-#   Development: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
-#   Build only:  docker compose build
+#   Production:  ./scripts/up.sh -d         (wraps `podman compose up` and
+#                                            starts the Mac-side IPv6 CONNECT
+#                                            proxy required on macOS podman)
+#   Shutdown:    ./scripts/down.sh
+#   Development: podman compose -f docker-compose.yml -f docker-compose.dev.yml up
+#   Build only:  podman compose build
 #
 # Prerequisites:
 #   1. Copy .env.example to .env and configure your API keys
 #   2. Runtime settings are stored in ./data/user/settings (created automatically)
+#   3. data/certs/ca-bundle.pem is regenerated via scripts/refresh-ca-bundle.sh
 #
 # Local LLM (LM Studio / Ollama / vLLM):
 #   Use "host.docker.internal" instead of "localhost" for LLM_HOST / EMBEDDING_HOST.
@@ -82,12 +86,26 @@ services:
       - NEXT_PUBLIC_API_BASE_EXTERNAL=${NEXT_PUBLIC_API_BASE_EXTERNAL:-}
       # Alternative: Direct API base URL (same priority as NEXT_PUBLIC_API_BASE_EXTERNAL)
       - NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE:-}
+      # Upstream HTTP(S) proxy. Required on macOS podman — the Linux VM has no IPv6
+      # egress, so traffic to IPv6-only internal endpoints must go through a proxy
+      # running on the Mac host (see scripts/ipv6-proxy.py).
+      - HTTP_PROXY=${HTTP_PROXY:-http://host.containers.internal:8899}
+      - HTTPS_PROXY=${HTTPS_PROXY:-http://host.containers.internal:8899}
+      - NO_PROXY=${NO_PROXY:-localhost,127.0.0.1,0.0.0.0,::1}
+      # CA bundle that includes the corporate root. Mounted below.
+      - SSL_CERT_FILE=/etc/ssl/corp/ca-bundle.pem
+      - REQUESTS_CA_BUNDLE=/etc/ssl/corp/ca-bundle.pem
+      - CURL_CA_BUNDLE=/etc/ssl/corp/ca-bundle.pem
+      - NODE_EXTRA_CA_CERTS=/etc/ssl/corp/ca-bundle.pem
 
     volumes:
       # Mount local data directory for persistence (read-write)
       # This includes runtime settings under ./data/user/settings.
       - ./data/user:/app/data/user
       - ./data/knowledge_bases:/app/data/knowledge_bases
+      # Corporate CA bundle (base Debian bundle + Yandex Internal Root CA).
+      # Regenerate via: scripts/refresh-ca-bundle.sh
+      - ./data/certs/ca-bundle.pem:/etc/ssl/corp/ca-bundle.pem:ro
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT:-8001}/"]
@@ -95,13 +113,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-
-    networks:
-      - deeptutor-network
-
-# ============================================
-# Networks
-# ============================================
-networks:
-  deeptutor-network:
-    driver: bridge

@@ -117,8 +117,13 @@ class OpenAICompatibleEmbeddingAdapter(BaseEmbeddingAdapter):
             "encoding_format": request.encoding_format or "float",
         }
 
-        if request.dimensions or self.dimensions:
-            payload["dimensions"] = request.dimensions or self.dimensions
+        # Only models in MODELS_INFO are known to accept the `dimensions` param
+        # (OpenAI matryoshka embeddings). Sending it to third-party endpoints
+        # like Qodo-Embed-1-7B makes them reject the request with HTTP 400.
+        if payload["model"] in self.MODELS_INFO:
+            dims = request.dimensions or self.dimensions
+            if dims:
+                payload["dimensions"] = dims
 
         base = self.base_url.rstrip('/')
         if base.endswith('/embeddings'):
