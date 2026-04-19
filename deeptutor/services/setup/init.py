@@ -85,6 +85,15 @@ DEFAULT_AGENTS_SETTINGS = {
         "question": {"temperature": 0.7, "max_tokens": 4096},
         "guide": {"temperature": 0.5, "max_tokens": 16192},
         "co_writer": {"temperature": 0.7, "max_tokens": 4096},
+        "chat": {
+            "temperature": 0.2,
+            "responding": {"max_tokens": 8000},
+            "answer_now": {"max_tokens": 8000},
+            "thinking": {"max_tokens": 2000},
+            "observing": {"max_tokens": 2000},
+            "acting": {"max_tokens": 2000},
+            "react_fallback": {"max_tokens": 1500},
+        },
     },
     "tools": {
         "brainstorm": {"temperature": 0.8, "max_tokens": 2048},
