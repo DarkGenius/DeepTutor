@@ -8,7 +8,7 @@ import {
   Coins,
   Copy,
   MessageSquare,
-  RotateCcw,
+  RefreshCcw,
   X,
   Zap,
   type LucideIcon,
@@ -377,7 +377,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   language,
   onAnswerNow,
   onCopyAssistantMessage,
-  onRetryMessage,
+  onRegenerateMessage,
   onConfirmOutline,
 }: {
   messages: ChatMessageItem[];
@@ -389,7 +389,7 @@ export const ChatMessageList = memo(function ChatMessageList({
     assistantMsg?: { content: string; events?: StreamEvent[] },
   ) => void;
   onCopyAssistantMessage: (content: string) => void | Promise<void>;
-  onRetryMessage: (snapshot?: MessageRequestSnapshot) => void;
+  onRegenerateMessage: () => void;
   onConfirmOutline?: (outline: Array<{ title: string; overview: string }>, topic: string, researchConfig?: Record<string, unknown> | null) => void;
 }) {
   const { t } = useTranslation();
@@ -438,6 +438,13 @@ export const ChatMessageList = memo(function ChatMessageList({
       });
   }, [messages]);
 
+  const lastAssistantIndex = useMemo(() => {
+    for (let idx = messages.length - 1; idx >= 0; idx -= 1) {
+      if (messages[idx].role === "assistant") return idx;
+    }
+    return -1;
+  }, [messages]);
+
   return (
     <>
       {messageRows.map(({ msg, originalIndex, pairedUserMessage }) => {
@@ -456,10 +463,13 @@ export const ChatMessageList = memo(function ChatMessageList({
         const msgDone = !isActiveAssistant;
         const showActions =
           msgDone && hasVisibleMarkdownContent(msg.content);
-        const showRetry =
+        const isLastAssistant = i === lastAssistantIndex;
+        const showRegenerate =
           showActions &&
-          (!pairedUserMessage?.capability || pairedUserMessage?.capability === "chat") &&
-          Boolean(pairedUserMessage?.requestSnapshot);
+          !isStreaming &&
+          isLastAssistant &&
+          Boolean(pairedUserMessage) &&
+          (!pairedUserMessage?.capability || pairedUserMessage?.capability === "chat");
 
         // The "Answer now" affordance lives inside the trace panel for the
         // currently-streaming assistant turn. We hand the panel a thin
@@ -503,11 +513,11 @@ export const ChatMessageList = memo(function ChatMessageList({
                       label="Copy"
                       onClick={() => void onCopyAssistantMessage(msg.content)}
                     />
-                    {showRetry && (
+                    {showRegenerate && (
                       <RoughActionButton
-                        icon={RotateCcw}
-                        label="Retry"
-                        onClick={() => onRetryMessage(pairedUserMessage?.requestSnapshot)}
+                        icon={RefreshCcw}
+                        label="Regenerate"
+                        onClick={() => onRegenerateMessage()}
                       />
                     )}
                   </div>
