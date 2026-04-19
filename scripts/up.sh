@@ -4,8 +4,10 @@
 # reach IPv6-only internal endpoints (see scripts/ipv6-proxy.py).
 #
 # Usage:
-#   ./scripts/up.sh           # foreground
-#   ./scripts/up.sh -d        # detached
+#   ./scripts/up.sh                 # foreground
+#   ./scripts/up.sh -d              # detached
+#   ./scripts/up.sh --build         # rebuild image(s) then bring the stack up
+#   ./scripts/up.sh --build -d      # rebuild and run detached
 #   IPV6_PROXY_PORT=9000 ./scripts/up.sh -d
 set -euo pipefail
 
@@ -35,6 +37,24 @@ ensure_proxy() {
     disown || true
 }
 
+# Strip --build out of the argv before forwarding the rest to `podman compose
+# up`, then run the build step explicitly. Doing this separately gives clearer
+# build progress and avoids edge cases where `up --build` skips rebuilding
+# images that compose considers "fresh enough".
+do_build=0
+up_args=()
+for arg in "$@"; do
+    if [[ "$arg" == "--build" ]]; then
+        do_build=1
+    else
+        up_args+=("$arg")
+    fi
+done
+
 cd "$REPO_DIR"
 ensure_proxy
-exec podman compose up "$@"
+if [[ "$do_build" -eq 1 ]]; then
+    echo "[up] rebuilding images (--build requested)"
+    podman compose build
+fi
+exec podman compose up "${up_args[@]}"
