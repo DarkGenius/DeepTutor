@@ -7,8 +7,10 @@ from .knowledge_base_config import (
 )
 from .model_catalog import ModelCatalogService, get_model_catalog_service
 from .loader import (
+    DEFAULT_CHAT_PARAMS,
     PROJECT_ROOT,
     get_agent_params,
+    get_chat_params,
     get_runtime_settings_dir,
     get_path_from_config,
     load_config_with_main,
@@ -28,6 +30,8 @@ __all__ = [
     "get_path_from_config",
     "parse_language",
     "get_agent_params",
+    "get_chat_params",
+    "DEFAULT_CHAT_PARAMS",
     "ResolvedLLMConfig",
     "ResolvedEmbeddingConfig",
     "ResolvedSearchConfig",
