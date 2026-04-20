@@ -26,17 +26,22 @@ class TestGetChatParams:
 
     def test_returns_defaults_when_file_missing(self, tmp_path: Path, monkeypatch):
         monkeypatch.setattr(
-            "deeptutor.services.config.loader.PROJECT_ROOT", tmp_path,
+            "deeptutor.services.config.loader.PROJECT_ROOT",
+            tmp_path,
         )
         params = get_chat_params()
         assert params == DEFAULT_CHAT_PARAMS
 
     def test_returns_defaults_when_chat_section_absent(self, tmp_path: Path, monkeypatch):
-        project_root = _write_agents_yaml(tmp_path, {
-            "capabilities": {"solve": {"temperature": 0.3}},
-        })
+        project_root = _write_agents_yaml(
+            tmp_path,
+            {
+                "capabilities": {"solve": {"temperature": 0.3}},
+            },
+        )
         monkeypatch.setattr(
-            "deeptutor.services.config.loader.PROJECT_ROOT", project_root,
+            "deeptutor.services.config.loader.PROJECT_ROOT",
+            project_root,
         )
         params = get_chat_params()
         assert params["temperature"] == DEFAULT_CHAT_PARAMS["temperature"]
@@ -44,15 +49,19 @@ class TestGetChatParams:
         assert params["thinking"]["max_tokens"] == 2000
 
     def test_overrides_specific_stage_only(self, tmp_path: Path, monkeypatch):
-        project_root = _write_agents_yaml(tmp_path, {
-            "capabilities": {
-                "chat": {
-                    "responding": {"max_tokens": 12000},
+        project_root = _write_agents_yaml(
+            tmp_path,
+            {
+                "capabilities": {
+                    "chat": {
+                        "responding": {"max_tokens": 12000},
+                    },
                 },
             },
-        })
+        )
         monkeypatch.setattr(
-            "deeptutor.services.config.loader.PROJECT_ROOT", project_root,
+            "deeptutor.services.config.loader.PROJECT_ROOT",
+            project_root,
         )
         params = get_chat_params()
         assert params["responding"]["max_tokens"] == 12000
@@ -61,32 +70,40 @@ class TestGetChatParams:
         assert params["temperature"] == 0.2
 
     def test_overrides_temperature(self, tmp_path: Path, monkeypatch):
-        project_root = _write_agents_yaml(tmp_path, {
-            "capabilities": {"chat": {"temperature": 0.7}},
-        })
+        project_root = _write_agents_yaml(
+            tmp_path,
+            {
+                "capabilities": {"chat": {"temperature": 0.7}},
+            },
+        )
         monkeypatch.setattr(
-            "deeptutor.services.config.loader.PROJECT_ROOT", project_root,
+            "deeptutor.services.config.loader.PROJECT_ROOT",
+            project_root,
         )
         params = get_chat_params()
         assert params["temperature"] == 0.7
         assert params["responding"]["max_tokens"] == 8000
 
     def test_full_chat_block_round_trip(self, tmp_path: Path, monkeypatch):
-        project_root = _write_agents_yaml(tmp_path, {
-            "capabilities": {
-                "chat": {
-                    "temperature": 0.4,
-                    "responding": {"max_tokens": 16000},
-                    "answer_now": {"max_tokens": 16000},
-                    "thinking": {"max_tokens": 3000},
-                    "observing": {"max_tokens": 3000},
-                    "acting": {"max_tokens": 3000},
-                    "react_fallback": {"max_tokens": 2500},
+        project_root = _write_agents_yaml(
+            tmp_path,
+            {
+                "capabilities": {
+                    "chat": {
+                        "temperature": 0.4,
+                        "responding": {"max_tokens": 16000},
+                        "answer_now": {"max_tokens": 16000},
+                        "thinking": {"max_tokens": 3000},
+                        "observing": {"max_tokens": 3000},
+                        "acting": {"max_tokens": 3000},
+                        "react_fallback": {"max_tokens": 2500},
+                    },
                 },
             },
-        })
+        )
         monkeypatch.setattr(
-            "deeptutor.services.config.loader.PROJECT_ROOT", project_root,
+            "deeptutor.services.config.loader.PROJECT_ROOT",
+            project_root,
         )
         params = get_chat_params()
         assert params["temperature"] == 0.4

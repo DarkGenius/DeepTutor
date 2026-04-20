@@ -22,26 +22,25 @@ from deeptutor.core.trace import (
 )
 from deeptutor.runtime.registry.tool_registry import get_tool_registry
 from deeptutor.services.config import get_chat_params
-from deeptutor.services.prompt import get_prompt_manager
 from deeptutor.services.llm import (
     clean_thinking_tags,
-    complete as llm_complete,
     get_llm_config,
     get_token_limit_kwargs,
     prepare_multimodal_messages,
-    stream as llm_stream,
     supports_response_format,
     supports_tools,
 )
+from deeptutor.services.llm import (
+    stream as llm_stream,
+)
+from deeptutor.services.prompt import get_prompt_manager
 from deeptutor.tools.builtin import BUILTIN_TOOL_NAMES
 from deeptutor.utils.json_parser import parse_json_response
 
 logger = logging.getLogger(__name__)
 
 CHAT_EXCLUDED_TOOLS = {"geogebra_analysis"}
-CHAT_OPTIONAL_TOOLS = [
-    name for name in BUILTIN_TOOL_NAMES if name not in CHAT_EXCLUDED_TOOLS
-]
+CHAT_OPTIONAL_TOOLS = [name for name in BUILTIN_TOOL_NAMES if name not in CHAT_EXCLUDED_TOOLS]
 MAX_PARALLEL_TOOL_CALLS = 8
 MAX_TOOL_RESULT_CHARS = 4000
 
@@ -274,7 +273,9 @@ class AgenticChatPipeline:
                 )
 
             chunks: list[str] = []
-            async for chunk in self._stream_messages(messages, max_tokens=self._chat_limits.thinking):
+            async for chunk in self._stream_messages(
+                messages, max_tokens=self._chat_limits.thinking
+            ):
                 if not chunk:
                     continue
                 chunks.append(chunk)
@@ -370,7 +371,9 @@ class AgenticChatPipeline:
             )
 
             chunks: list[str] = []
-            async for chunk in self._stream_messages(messages, max_tokens=self._chat_limits.observing):
+            async for chunk in self._stream_messages(
+                messages, max_tokens=self._chat_limits.observing
+            ):
                 if not chunk:
                     continue
                 chunks.append(chunk)
@@ -432,7 +435,9 @@ class AgenticChatPipeline:
             )
 
             chunks: list[str] = []
-            async for chunk in self._stream_messages(messages, max_tokens=self._chat_limits.responding):
+            async for chunk in self._stream_messages(
+                messages, max_tokens=self._chat_limits.responding
+            ):
                 if not chunk:
                     continue
                 chunks.append(chunk)
@@ -529,7 +534,9 @@ class AgenticChatPipeline:
             user_prompt = self._t(
                 "answer_now.user",
                 original_user_message=original_user_message,
-                partial_response=partial_response.strip() if partial_response.strip() else "(empty)",
+                partial_response=partial_response.strip()
+                if partial_response.strip()
+                else "(empty)",
                 trace_summary=trace_summary,
             )
             messages = self._build_messages(
@@ -539,7 +546,9 @@ class AgenticChatPipeline:
             )
 
             chunks: list[str] = []
-            async for chunk in self._stream_messages(messages, max_tokens=self._chat_limits.answer_now):
+            async for chunk in self._stream_messages(
+                messages, max_tokens=self._chat_limits.answer_now
+            ):
                 if not chunk:
                     continue
                 chunks.append(chunk)
@@ -922,9 +931,7 @@ class AgenticChatPipeline:
         if context.memory_context:
             system_parts.append(context.memory_context)
 
-        messages: list[dict[str, Any]] = [
-            {"role": "system", "content": "\n\n".join(system_parts)}
-        ]
+        messages: list[dict[str, Any]] = [{"role": "system", "content": "\n\n".join(system_parts)}]
         for item in context.conversation_history:
             role = item.get("role")
             content = item.get("content")
@@ -1000,7 +1007,14 @@ class AgenticChatPipeline:
     def _can_use_native_tool_calling(self) -> bool:
         if not supports_tools(self.binding, self.model):
             return False
-        return self.binding not in {"anthropic", "claude", "ollama", "lm_studio", "vllm", "llama_cpp"}
+        return self.binding not in {
+            "anthropic",
+            "claude",
+            "ollama",
+            "lm_studio",
+            "vllm",
+            "llama_cpp",
+        }
 
     def _normalize_enabled_tools(self, enabled_tools: list[str] | None) -> list[str]:
         selected = enabled_tools or []
@@ -1015,6 +1029,7 @@ class AgenticChatPipeline:
         # Delegate to the shared helper so every capability uses the
         # exact same gate (presence + non-empty original_user_message).
         from deeptutor.capabilities._answer_now import extract_answer_now_context
+
         return extract_answer_now_context(context)
 
     async def _execute_tool_call(
