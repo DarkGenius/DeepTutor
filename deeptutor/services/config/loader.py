@@ -29,6 +29,7 @@ def get_runtime_settings_dir(project_root: Path | None = None) -> Path:
     root = project_root or PROJECT_ROOT
     return root / "data" / "user" / "settings"
 
+
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """
     Deep merge two dictionaries, values in override will override values in base
@@ -107,8 +108,7 @@ def resolve_config_path(
     if config_path.exists():
         return config_path, False
     raise FileNotFoundError(
-        f"Configuration file not found: {config_file} "
-        f"(expected under {settings_dir})"
+        f"Configuration file not found: {config_file} (expected under {settings_dir})"
     )
 
 

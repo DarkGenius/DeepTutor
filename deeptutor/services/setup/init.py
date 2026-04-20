@@ -126,7 +126,7 @@ def init_user_directories(project_root: Path | None = None) -> None:
 
     This function uses lazy initialization - directories are created on-demand
     when files are saved, rather than pre-creating all directories at startup.
-    
+
     Only essential configuration files (like settings/interface.json) are
     created at startup if they don't exist.
 
@@ -166,7 +166,7 @@ def init_user_directories(project_root: Path | None = None) -> None:
 def _ensure_essential_settings(path_service) -> None:
     """
     Ensure essential settings files exist.
-    
+
     This is the minimal initialization needed at startup.
     All other directories are created on-demand when files are saved.
     """
