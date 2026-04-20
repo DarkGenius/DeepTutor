@@ -80,9 +80,7 @@ class TestStoreTailRollback:
         assert [m["id"] for m in remaining] == [m1]
         assert remaining[0]["role"] == "user"
 
-    def test_delete_message_returns_false_when_missing(
-        self, store: SQLiteSessionStore
-    ) -> None:
+    def test_delete_message_returns_false_when_missing(self, store: SQLiteSessionStore) -> None:
         assert asyncio.run(store.delete_message(99999)) is False
 
     def test_get_last_message_no_filter(self, store: SQLiteSessionStore) -> None:
@@ -96,9 +94,7 @@ class TestStoreTailRollback:
         assert last["id"] == last_id
         assert last["role"] == "assistant"
 
-    def test_get_last_message_filtered_by_role(
-        self, store: SQLiteSessionStore
-    ) -> None:
+    def test_get_last_message_filtered_by_role(self, store: SQLiteSessionStore) -> None:
         session = asyncio.run(store.create_session())
         sid = session["id"]
         u1 = asyncio.run(store.add_message(sid, role="user", content="q1"))
@@ -113,9 +109,7 @@ class TestStoreTailRollback:
         # Sanity: u1 still exists but is not the last user.
         assert u1 != u2
 
-    def test_get_last_message_empty_session(
-        self, store: SQLiteSessionStore
-    ) -> None:
+    def test_get_last_message_empty_session(self, store: SQLiteSessionStore) -> None:
         session = asyncio.run(store.create_session())
         assert asyncio.run(store.get_last_message(session["id"])) is None
 
@@ -209,9 +203,7 @@ class TestRegenerateLastTurn:
         assert [m["id"] for m in remaining] == [user_id]
         assert assistant_id is not None and assistant_id not in {m["id"] for m in remaining}
 
-    def test_user_tail_is_kept_and_no_delete(
-        self, store: SQLiteSessionStore
-    ) -> None:
+    def test_user_tail_is_kept_and_no_delete(self, store: SQLiteSessionStore) -> None:
         sid, user_id, _ = _seed_session(store, assistant_content=None)
         runtime = TurnRuntimeManager(store=store)
         recorder = _FakeStartTurnRecorder()
@@ -223,9 +215,7 @@ class TestRegenerateLastTurn:
         remaining = asyncio.run(store.get_messages(sid))
         assert [m["id"] for m in remaining] == [user_id]
 
-    def test_empty_session_raises_nothing_to_regenerate(
-        self, store: SQLiteSessionStore
-    ) -> None:
+    def test_empty_session_raises_nothing_to_regenerate(self, store: SQLiteSessionStore) -> None:
         session = asyncio.run(store.create_session())
         runtime = TurnRuntimeManager(store=store)
 
@@ -233,17 +223,13 @@ class TestRegenerateLastTurn:
             asyncio.run(runtime.regenerate_last_turn(session["id"]))
         assert str(exc.value) == "nothing_to_regenerate"
 
-    def test_missing_session_raises_nothing_to_regenerate(
-        self, store: SQLiteSessionStore
-    ) -> None:
+    def test_missing_session_raises_nothing_to_regenerate(self, store: SQLiteSessionStore) -> None:
         runtime = TurnRuntimeManager(store=store)
         with pytest.raises(RuntimeError) as exc:
             asyncio.run(runtime.regenerate_last_turn("does-not-exist"))
         assert str(exc.value) == "nothing_to_regenerate"
 
-    def test_active_running_turn_raises_busy(
-        self, store: SQLiteSessionStore
-    ) -> None:
+    def test_active_running_turn_raises_busy(self, store: SQLiteSessionStore) -> None:
         sid, _, _ = _seed_session(store)
         # Create a running turn directly via the store.
         asyncio.run(store.create_turn(sid, capability="chat"))
@@ -308,9 +294,7 @@ class TestRegenerateLastTurn:
             "deeptutor.services.session.context_builder.ContextBuilder",
             FakeContextBuilder,
         )
-        monkeypatch.setattr(
-            "deeptutor.runtime.orchestrator.ChatOrchestrator", FakeOrchestrator
-        )
+        monkeypatch.setattr("deeptutor.runtime.orchestrator.ChatOrchestrator", FakeOrchestrator)
         monkeypatch.setattr(
             "deeptutor.services.memory.get_memory_service",
             lambda: SimpleNamespace(
@@ -361,9 +345,7 @@ class TestRegenerateLastTurn:
         # Memory refresh must NOT have been called a second time.
         assert len(refresh_calls) == 1
 
-    def test_overrides_take_precedence(
-        self, store: SQLiteSessionStore
-    ) -> None:
+    def test_overrides_take_precedence(self, store: SQLiteSessionStore) -> None:
         sid, _, _ = _seed_session(store)
         runtime = TurnRuntimeManager(store=store)
         recorder = _FakeStartTurnRecorder()
