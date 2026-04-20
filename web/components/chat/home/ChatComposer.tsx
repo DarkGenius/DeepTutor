@@ -8,19 +8,22 @@ import {
   AtSign,
   BookOpen,
   ChevronDown,
+  ClipboardList,
   FilePlus2,
   Layers,
   MessageSquare,
   Paperclip,
   Sparkles,
   Square,
+  Wand2,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SelectedHistorySession } from "@/components/chat/HistorySessionPicker";
+import type { SelectedQuestionEntry } from "@/components/chat/QuestionBankPicker";
 import AtMentionPopup from "@/components/chat/AtMentionPopup";
-import type { SelectedRecord } from "@/app/(workspace)/guide/types";
+import type { SelectedRecord } from "@/lib/notebook-selection-types";
 import type { DeepQuestionFormConfig } from "@/lib/quiz-types";
 import type { MathAnimatorFormConfig } from "@/lib/math-animator-types";
 import type { VisualizeFormConfig } from "@/lib/visualize-types";
@@ -91,11 +94,14 @@ export default memo(function ChatComposer({
   toolBtnRef,
   refMenuRef,
   refBtnRef,
+  skillMenuRef,
+  skillBtnRef,
   dragCounter,
   dragging,
   capMenuOpen,
   toolMenuOpen,
   refMenuOpen,
+  skillMenuOpen,
   hasMessages,
   attachments,
   activeCap,
@@ -105,7 +111,11 @@ export default memo(function ChatComposer({
   knowledgeBases,
   selectedNotebookRecords,
   selectedHistorySessions,
+  selectedQuestionEntries,
   notebookReferenceGroups,
+  availableSkills,
+  selectedSkills,
+  skillsAutoMode,
   stateKnowledgeBase,
   isStreaming,
   isResearchMode,
@@ -124,15 +134,20 @@ export default memo(function ChatComposer({
   onSetCapMenuOpen,
   onSetToolMenuOpen,
   onSetRefMenuOpen,
+  onSetSkillMenuOpen,
   onSetKB,
   onSelectNotebookPicker,
   onSelectHistoryPicker,
+  onSelectQuestionBankPicker,
   onToggleTool,
+  onToggleSkill,
+  onSetSkillsAuto,
   onToggleResearchSource,
   onSend,
   onRemoveAttachment,
   onRemoveHistory,
   onRemoveNotebook,
+  onRemoveQuestion,
   onDragEnter,
   onDragLeave,
   onDragOver,
@@ -154,11 +169,14 @@ export default memo(function ChatComposer({
   toolBtnRef: RefObject<HTMLButtonElement | null>;
   refMenuRef: RefObject<HTMLDivElement | null>;
   refBtnRef: RefObject<HTMLButtonElement | null>;
+  skillMenuRef: RefObject<HTMLDivElement | null>;
+  skillBtnRef: RefObject<HTMLButtonElement | null>;
   dragCounter: RefObject<number>;
   dragging: boolean;
   capMenuOpen: boolean;
   toolMenuOpen: boolean;
   refMenuOpen: boolean;
+  skillMenuOpen: boolean;
   hasMessages: boolean;
   attachments: PendingAttachment[];
   activeCap: CapabilityDef;
@@ -168,7 +186,11 @@ export default memo(function ChatComposer({
   knowledgeBases: KnowledgeBase[];
   selectedNotebookRecords: SelectedRecord[];
   selectedHistorySessions: SelectedHistorySession[];
+  selectedQuestionEntries: SelectedQuestionEntry[];
   notebookReferenceGroups: Array<{ notebookId: string; notebookName: string; count: number }>;
+  availableSkills: Array<{ name: string; description: string }>;
+  selectedSkills: string[];
+  skillsAutoMode: boolean;
   stateKnowledgeBase: string;
   isStreaming: boolean;
   isResearchMode: boolean;
@@ -187,15 +209,20 @@ export default memo(function ChatComposer({
   onSetCapMenuOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   onSetToolMenuOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   onSetRefMenuOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+  onSetSkillMenuOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   onSetKB: (kb: string) => void;
   onSelectNotebookPicker: () => void;
   onSelectHistoryPicker: () => void;
+  onSelectQuestionBankPicker: () => void;
   onToggleTool: (tool: ToolDef["name"]) => void;
+  onToggleSkill: (skill: string) => void;
+  onSetSkillsAuto: (auto: boolean) => void;
   onToggleResearchSource: (source: ResearchSource) => void;
   onSend: (content: string) => void;
   onRemoveAttachment: (index: number) => void;
   onRemoveHistory: (sessionId: string) => void;
   onRemoveNotebook: (notebookId: string) => void;
+  onRemoveQuestion: (entryId: number) => void;
   onDragEnter: (event: React.DragEvent) => void;
   onDragLeave: (event: React.DragEvent) => void;
   onDragOver: (event: React.DragEvent) => void;
@@ -273,8 +300,18 @@ export default memo(function ChatComposer({
     onSelectHistoryPicker();
   }, [onSelectHistoryPicker]);
 
+  const handleSelectQuestionBank = useCallback(() => {
+    setInput((prev) => stripTrailingAtMention(prev));
+    setShowAtPopup(false);
+    onSelectQuestionBankPicker();
+  }, [onSelectQuestionBankPicker]);
+
   const canSend =
-    (!!input.trim() || !!attachments.length || !!selectedNotebookRecords.length || !!selectedHistorySessions.length) &&
+    (!!input.trim() ||
+      !!attachments.length ||
+      !!selectedNotebookRecords.length ||
+      !!selectedHistorySessions.length ||
+      !!selectedQuestionEntries.length) &&
     !isStreaming &&
     !(isResearchMode && Object.keys(researchValidationErrors).length > 0);
 
@@ -328,6 +365,7 @@ export default memo(function ChatComposer({
           open={showAtPopup}
           onSelectNotebook={handleSelectNotebook}
           onSelectHistory={handleSelectHistory}
+          onSelectQuestionBank={handleSelectQuestionBank}
         />
 
         <div
@@ -355,8 +393,10 @@ export default memo(function ChatComposer({
             <ReferenceChips
               historySessions={selectedHistorySessions}
               notebookGroups={notebookReferenceGroups}
+              questionEntries={selectedQuestionEntries}
               onRemoveHistory={onRemoveHistory}
               onRemoveNotebook={onRemoveNotebook}
+              onRemoveQuestion={onRemoveQuestion}
             />
             <textarea
               ref={textareaRef}
@@ -541,9 +581,13 @@ export default memo(function ChatComposer({
                     {t("Reference")}
                     <ChevronDown size={10} className={`transition-transform ${refMenuOpen ? "rotate-180" : ""}`} />
                   </button>
-                  {(selectedNotebookRecords.length > 0 || selectedHistorySessions.length > 0) && (
+                  {(selectedNotebookRecords.length > 0 ||
+                    selectedHistorySessions.length > 0 ||
+                    selectedQuestionEntries.length > 0) && (
                     <span className="shrink-0 rounded-full bg-[var(--primary)]/10 px-1.5 py-px text-[9px] font-semibold text-[var(--primary)]">
-                      {selectedNotebookRecords.length + selectedHistorySessions.length}
+                      {selectedNotebookRecords.length +
+                        selectedHistorySessions.length +
+                        selectedQuestionEntries.length}
                     </span>
                   )}
                   {refMenuOpen && (
@@ -577,9 +621,96 @@ export default memo(function ChatComposer({
                           <span className="text-[10px] text-[var(--primary)]">{selectedHistorySessions.length}</span>
                         )}
                       </button>
+                      <button
+                        onClick={() => {
+                          onSetRefMenuOpen(false);
+                          onSelectQuestionBankPicker();
+                        }}
+                        className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[12px] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)] hover:bg-[var(--muted)]/40"
+                      >
+                        <ClipboardList size={13} strokeWidth={1.7} />
+                        <span className="flex-1 font-medium">{t("Question Bank")}</span>
+                        {selectedQuestionEntries.length > 0 && (
+                          <span className="text-[10px] text-[var(--primary)]">{selectedQuestionEntries.length}</span>
+                        )}
+                      </button>
                     </div>
                   )}
                 </div>
+
+                {!activeCap.value && (
+                  <div className="relative flex items-center gap-0.5">
+                    <button
+                      ref={skillBtnRef}
+                      onClick={() => onSetSkillMenuOpen((v) => !v)}
+                      className="inline-flex shrink-0 items-center gap-1 py-1 px-1.5 text-[11px] font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+                    >
+                      <Wand2 size={12} strokeWidth={1.7} />
+                      {t("Skills")}
+                      <ChevronDown size={10} className={`transition-transform ${skillMenuOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {(skillsAutoMode || selectedSkills.length > 0) && (
+                      <div className="flex items-center gap-[3px] overflow-hidden">
+                        {skillsAutoMode ? (
+                          <span className="shrink-0 text-[10px] text-[var(--muted-foreground)]/35">{t("Auto")}</span>
+                        ) : (
+                          selectedSkills.map((name, i) => (
+                            <span key={name} className="shrink-0 text-[10px] text-[var(--muted-foreground)]/35">
+                              {i > 0 && <span className="text-[12px] leading-none">·</span>}
+                              {name}
+                            </span>
+                          ))
+                        )}
+                      </div>
+                    )}
+                    {skillMenuOpen && (
+                      <div
+                        ref={skillMenuRef}
+                        className="absolute bottom-full left-0 z-50 mb-1.5 max-h-[280px] min-w-[220px] overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--card)] py-1 shadow-lg"
+                      >
+                        <button
+                          onClick={() => onSetSkillsAuto(!skillsAutoMode)}
+                          className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[12px] transition-colors ${
+                            skillsAutoMode
+                              ? "text-[var(--primary)]"
+                              : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                          } hover:bg-[var(--muted)]/40`}
+                        >
+                          <Sparkles size={13} strokeWidth={1.7} />
+                          <span className="flex-1 font-medium">{t("Auto")}</span>
+                          {skillsAutoMode && <div className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />}
+                        </button>
+                        {availableSkills.length > 0 && (
+                          <div className="my-1 h-px bg-[var(--border)]/40" />
+                        )}
+                        {availableSkills.map((skill) => {
+                          const active = selectedSkills.includes(skill.name);
+                          return (
+                            <button
+                              key={skill.name}
+                              onClick={() => onToggleSkill(skill.name)}
+                              title={skill.description}
+                              className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[12px] transition-colors ${
+                                active
+                                  ? "text-[var(--primary)]"
+                                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                              } hover:bg-[var(--muted)]/40`}
+                            >
+                              <Wand2 size={13} strokeWidth={1.7} />
+                              <span className="flex-1 truncate font-medium">{skill.name}</span>
+                              {active && <div className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />}
+                            </button>
+                          );
+                        })}
+                        {availableSkills.length === 0 && (
+                          <div className="px-3 py-2 text-[11px] text-[var(--muted-foreground)]/60">
+                            {t("No skills yet")}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="ml-auto flex shrink-0 items-center gap-1.5">
