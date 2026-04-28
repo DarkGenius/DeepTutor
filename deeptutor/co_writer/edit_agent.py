@@ -5,12 +5,12 @@ Inherits from unified BaseAgent.
 
 from datetime import datetime
 import json
-from pathlib import Path
 from typing import Any, Literal
 import uuid
 
 from deeptutor.agents.base_agent import BaseAgent
 from deeptutor.runtime.registry.tool_registry import get_tool_registry
+from deeptutor.services.llm import clean_thinking_tags
 from deeptutor.services.path_service import get_path_service
 from deeptutor.tools.rag_tool import rag_search
 from deeptutor.tools.web_search import web_search
@@ -171,9 +171,7 @@ class EditAgent(BaseAgent):
             "system",
             "You are an expert editor and writing assistant.\n\nAvailable reference tools:\n{available_tools}",
         )
-        system_prompt = system_template.format(
-            available_tools=self._build_available_tools_text()
-        )
+        system_prompt = system_template.format(available_tools=self._build_available_tools_text())
 
         action_verbs = {"rewrite": "Rewrite", "shorten": "Shorten", "expand": "Expand"}
         action_verb = action_verbs.get(action, "Rewrite")
@@ -208,7 +206,7 @@ class EditAgent(BaseAgent):
             stage=f"edit_{action}",
         ):
             _chunks.append(_c)
-        response = "".join(_chunks)
+        response = clean_thinking_tags("".join(_chunks), self.binding, self.get_model())
 
         # Record operation history
         history = load_history()
@@ -255,7 +253,7 @@ class EditAgent(BaseAgent):
             stage="auto_mark",
         ):
             _chunks.append(_c)
-        response = "".join(_chunks)
+        response = clean_thinking_tags("".join(_chunks), self.binding, self.get_model())
 
         # Record operation history
         history = load_history()

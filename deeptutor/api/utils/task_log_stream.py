@@ -1,10 +1,10 @@
 import asyncio
+from collections import deque
+from collections.abc import AsyncGenerator
 import contextlib
 import json
 import logging
 import threading
-from collections import deque
-from collections.abc import AsyncGenerator
 from typing import Any
 
 
@@ -75,8 +75,11 @@ class KnowledgeTaskStreamManager:
     def emit_complete(self, task_id: str, detail: str = "Task completed"):
         self.emit(task_id, "complete", {"detail": detail, "task_id": task_id})
 
-    def emit_failed(self, task_id: str, detail: str):
-        self.emit(task_id, "failed", {"detail": detail, "task_id": task_id})
+    def emit_failed(self, task_id: str, detail: str, *, details: str | None = None):
+        payload: dict[str, Any] = {"detail": detail, "task_id": task_id}
+        if details:
+            payload["details"] = details
+        self.emit(task_id, "failed", payload)
 
     def subscribe(
         self, task_id: str
@@ -89,7 +92,9 @@ class KnowledgeTaskStreamManager:
             backlog = list(self._buffers[task_id])
         return queue, backlog, loop
 
-    def unsubscribe(self, task_id: str, queue: asyncio.Queue[dict[str, Any]], loop: asyncio.AbstractEventLoop):
+    def unsubscribe(
+        self, task_id: str, queue: asyncio.Queue[dict[str, Any]], loop: asyncio.AbstractEventLoop
+    ):
         with self._lock:
             subscribers = self._subscribers.get(task_id, [])
             self._subscribers[task_id] = [

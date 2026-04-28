@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from deeptutor.services.path_service import get_path_service
@@ -59,7 +59,20 @@ class ModelCatalogService:
             catalog.update({k: v for k, v in loaded.items() if k != "services"})
             catalog["services"].update(loaded.get("services", {}))
             hydrated = self._hydrate_missing_services_from_env(catalog)
-            synced = self._sync_active_services_from_env(catalog)
+            # Only overlay .env values onto the active profile while the
+            # catalog is still in its pristine, freshly-seeded state
+            # (one auto-generated profile per service whose id matches
+            # the ``<service>-profile-default`` shape). Once the user has
+            # added a second profile or otherwise customized things, the
+            # catalog becomes the source of truth — overlaying env onto
+            # the active profile would silently destroy unsaved /
+            # save-draft-but-not-applied edits (e.g. the new "aliyun"
+            # profile inheriting the previous active profile's openrouter
+            # base_url after page refresh). The first-bootstrap case is
+            # already handled by ``_hydrate_missing_services_from_env``.
+            synced = False
+            if self._is_catalog_pristine(catalog):
+                synced = self._sync_active_services_from_env(catalog)
             self._normalize(catalog)
             if hydrated or synced:
                 self.save(catalog)
@@ -68,6 +81,29 @@ class ModelCatalogService:
         catalog = self._build_from_env()
         self.save(catalog)
         return catalog
+
+    def _is_catalog_pristine(self, catalog: dict[str, Any]) -> bool:
+        """Return True if the catalog still looks like a fresh bootstrap.
+
+        Pristine means each of the LLM and embedding services has at most
+        one profile and that profile's id matches the default-seeded shape
+        (``llm-profile-default`` / ``embedding-profile-default``). Any
+        deviation — added profiles, re-keyed ids — is taken as evidence
+        that the user has been managing the catalog through the UI and
+        we should respect their state instead of overlaying ``.env``.
+        """
+        services = catalog.get("services") or {}
+        for svc_name, default_id in (
+            ("llm", "llm-profile-default"),
+            ("embedding", "embedding-profile-default"),
+        ):
+            svc = services.get(svc_name) or {}
+            profiles = svc.get("profiles") or []
+            if len(profiles) > 1:
+                return False
+            if profiles and profiles[0].get("id") != default_id:
+                return False
+        return True
 
     def save(self, catalog: dict[str, Any]) -> dict[str, Any]:
         normalized = deepcopy(catalog)
@@ -123,7 +159,9 @@ class ModelCatalogService:
             changed = True
 
         embedding_service = services.setdefault("embedding", _service_shell())
-        if not embedding_service.get("profiles") and (summary.embedding["model"] or summary.embedding["host"]):
+        if not embedding_service.get("profiles") and (
+            summary.embedding["model"] or summary.embedding["host"]
+        ):
             profile_id = "embedding-profile-default"
             model_id = "embedding-model-default"
             services["embedding"] = {
@@ -143,7 +181,11 @@ class ModelCatalogService:
                                 "id": model_id,
                                 "name": summary.embedding["model"] or "Default Embedding Model",
                                 "model": summary.embedding["model"],
-                                "dimension": summary.embedding["dimension"] or "3072",
+                                # Empty triggers test_runner auto-fill on first
+                                # successful "Test connection". Eliminates the
+                                # OpenAI-only 3072 default that breaks every
+                                # other embedding provider.
+                                "dimension": summary.embedding["dimension"] or "",
                             }
                         ],
                     }
@@ -191,8 +233,8 @@ class ModelCatalogService:
         changed = False
 
         def ensure_llm_profile() -> tuple[dict[str, Any], dict[str, Any]]:
-            service = services.setdefault("llm", _service_shell())
-            profiles = service.setdefault("profiles", [])
+            service = cast(dict[str, Any], services.setdefault("llm", _service_shell()))
+            profiles = cast(list[dict[str, Any]], service.setdefault("profiles", []))
             if not profiles:
                 profile_id = "llm-profile-default"
                 model_id = "llm-model-default"
@@ -209,13 +251,16 @@ class ModelCatalogService:
                 service["profiles"] = [profile]
                 service["active_profile_id"] = profile_id
                 service["active_model_id"] = model_id
-            profile = self.get_active_profile(catalog, "llm") or service["profiles"][0]
-            model = self.get_active_model(catalog, "llm") or (profile.setdefault("models", [{}])[0])
+            profile = self.get_active_profile(catalog, "llm") or profiles[0]
+            model = (
+                self.get_active_model(catalog, "llm")
+                or cast(list[dict[str, Any]], profile.setdefault("models", [{}]))[0]
+            )
             return profile, model
 
         def ensure_embedding_profile() -> tuple[dict[str, Any], dict[str, Any]]:
-            service = services.setdefault("embedding", _service_shell())
-            profiles = service.setdefault("profiles", [])
+            service = cast(dict[str, Any], services.setdefault("embedding", _service_shell()))
+            profiles = cast(list[dict[str, Any]], service.setdefault("profiles", []))
             if not profiles:
                 profile_id = "embedding-profile-default"
                 model_id = "embedding-model-default"
@@ -232,20 +277,24 @@ class ModelCatalogService:
                             "id": model_id,
                             "name": "Default Embedding Model",
                             "model": "",
-                            "dimension": "3072",
+                            # Auto-filled on first successful "Test connection".
+                            "dimension": "",
                         }
                     ],
                 }
                 service["profiles"] = [profile]
                 service["active_profile_id"] = profile_id
                 service["active_model_id"] = model_id
-            profile = self.get_active_profile(catalog, "embedding") or service["profiles"][0]
-            model = self.get_active_model(catalog, "embedding") or (profile.setdefault("models", [{}])[0])
+            profile = self.get_active_profile(catalog, "embedding") or profiles[0]
+            model = (
+                self.get_active_model(catalog, "embedding")
+                or cast(list[dict[str, Any]], profile.setdefault("models", [{}]))[0]
+            )
             return profile, model
 
         def ensure_search_profile() -> dict[str, Any]:
-            service = services.setdefault("search", _search_shell())
-            profiles = service.setdefault("profiles", [])
+            service = cast(dict[str, Any], services.setdefault("search", _search_shell()))
+            profiles = cast(list[dict[str, Any]], service.setdefault("profiles", []))
             if not profiles:
                 profile_id = "search-profile-default"
                 profile = {
@@ -260,7 +309,7 @@ class ModelCatalogService:
                 }
                 service["profiles"] = [profile]
                 service["active_profile_id"] = profile_id
-            return self.get_active_profile(catalog, "search") or service["profiles"][0]
+            return self.get_active_profile(catalog, "search") or profiles[0]
 
         llm_keys = {
             "LLM_BINDING",
@@ -280,7 +329,10 @@ class ModelCatalogService:
             if "LLM_HOST" in env_values and profile.get("base_url") != summary.llm["host"]:
                 profile["base_url"] = summary.llm["host"]
                 changed = True
-            if "LLM_API_VERSION" in env_values and profile.get("api_version") != summary.llm["api_version"]:
+            if (
+                "LLM_API_VERSION" in env_values
+                and profile.get("api_version") != summary.llm["api_version"]
+            ):
                 profile["api_version"] = summary.llm["api_version"]
                 changed = True
             if "LLM_MODEL" in env_values:
@@ -297,6 +349,7 @@ class ModelCatalogService:
             "EMBEDDING_API_KEY",
             "EMBEDDING_HOST",
             "EMBEDDING_DIMENSION",
+            "EMBEDDING_SEND_DIMENSIONS",
             "EMBEDDING_API_VERSION",
         }
         if embedding_keys.intersection(env_values.keys()):
@@ -338,6 +391,14 @@ class ModelCatalogService:
             ):
                 model["dimension"] = summary.embedding["dimension"]
                 changed = True
+            if "EMBEDDING_SEND_DIMENSIONS" in env_values:
+                env_send_dim = summary.embedding.get("send_dimensions", "")
+                if model.get("send_dimensions", "") != env_send_dim:
+                    if env_send_dim:
+                        model["send_dimensions"] = env_send_dim
+                    else:
+                        model.pop("send_dimensions", None)
+                    changed = True
 
         search_keys = {
             "SEARCH_PROVIDER",
@@ -398,7 +459,14 @@ class ModelCatalogService:
                         model.setdefault("name", model.get("model") or "Untitled Model")
                         model.setdefault("model", "")
                         if service_name == "embedding":
-                            model.setdefault("dimension", "3072")
+                            # Empty default → test_runner auto-fills from the
+                            # actual API response on first connection test.
+                            model.setdefault("dimension", "")
+                            # CSV of supported dims discovered during the last
+                            # successful "Test connection" — drives the UI
+                            # dropdown. Empty when the model is not in any
+                            # adapter's MODELS_INFO map.
+                            model.setdefault("supported_dimensions", "")
             if profiles and not service.get("active_profile_id"):
                 service["active_profile_id"] = profiles[0]["id"]
             if service_name in {"llm", "embedding"}:
@@ -407,7 +475,9 @@ class ModelCatalogService:
                     if active_profile and active_profile.get("models"):
                         service["active_model_id"] = active_profile["models"][0]["id"]
 
-    def get_active_profile(self, catalog: dict[str, Any], service_name: str) -> dict[str, Any] | None:
+    def get_active_profile(
+        self, catalog: dict[str, Any], service_name: str
+    ) -> dict[str, Any] | None:
         service = catalog.get("services", {}).get(service_name, {})
         active_id = service.get("active_profile_id")
         for profile in service.get("profiles", []):

@@ -8,7 +8,8 @@ import { useAppShell } from "@/context/AppShellContext";
 import {
   BookOpen,
   Bot,
-  Brain,
+  Github,
+  LayoutGrid,
   Library,
   MessageSquare,
   PanelLeftClose,
@@ -21,8 +22,7 @@ import {
 import { useTranslation } from "react-i18next";
 import SessionList from "@/components/SessionList";
 import { TutorBotRecent } from "@/components/sidebar/TutorBotRecent";
-import { BookRecent } from "@/components/sidebar/BookRecent";
-import { CoWriterRecent } from "@/components/sidebar/CoWriterRecent";
+import { VersionBadge } from "@/components/sidebar/VersionBadge";
 import type { SessionSummary } from "@/lib/session-api";
 
 interface NavEntry {
@@ -37,11 +37,14 @@ const PRIMARY_NAV: NavEntry[] = [
   { href: "/co-writer", label: "Co-Writer", icon: PenLine },
   { href: "/book", label: "Book", icon: Library },
   { href: "/knowledge", label: "Knowledge", icon: BookOpen },
-  { href: "/memory", label: "Memory", icon: Brain },
+  { href: "/space", label: "Space", icon: LayoutGrid },
 ];
 
-const SECONDARY_NAV: NavEntry[] = [{ href: "/settings", label: "Settings", icon: Settings }];
+const SECONDARY_NAV: NavEntry[] = [
+  { href: "/settings", label: "Settings", icon: Settings },
+];
 const DEFAULT_SESSION_VIEWPORT_CLASS_NAME = "max-h-[112px]";
+const GITHUB_REPO_URL = "https://github.com/HKUDS/DeepTutor";
 
 interface SidebarShellProps {
   sessions?: SessionSummary[];
@@ -71,7 +74,8 @@ export function SidebarShell({
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useTranslation();
-  const { sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed } = useAppShell();
+  const { sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed } =
+    useAppShell();
 
   const handleNewChat = () => {
     if (onNewChat) {
@@ -97,7 +101,7 @@ export function SidebarShell({
               alt="DeepTutor"
               width={22}
               height={22}
-              className="rounded-md"
+              className="h-[22px] w-[22px] rounded-md"
             />
           </Link>
           <button
@@ -172,6 +176,17 @@ export function SidebarShell({
             );
           })}
           {footerSlot}
+          <a
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noreferrer noopener"
+            title="GitHub"
+            aria-label="GitHub"
+            className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl text-[var(--muted-foreground)]/70 transition-colors hover:bg-[var(--background)]/50 hover:text-[var(--foreground)]"
+          >
+            <Github size={15} strokeWidth={1.6} />
+          </a>
+          <VersionBadge collapsed />
         </div>
       </aside>
     );
@@ -188,7 +203,7 @@ export function SidebarShell({
             alt="DeepTutor"
             width={22}
             height={22}
-            className="transition-transform duration-200 group-hover:scale-105"
+            className="h-[22px] w-[22px] transition-transform duration-200 group-hover:scale-105"
           />
           <span className="text-[16px] font-semibold leading-none tracking-[-0.02em] text-[var(--foreground)]">
             DeepTutor
@@ -217,10 +232,13 @@ export function SidebarShell({
 
           {PRIMARY_NAV.map((item) => {
             const active = pathname.startsWith(item.href);
-            const hasSessionsBelow = item.href === "/chat" && showSessions && onSelectSession && onRenameSession && onDeleteSession;
+            const hasSessionsBelow =
+              item.href === "/chat" &&
+              showSessions &&
+              onSelectSession &&
+              onRenameSession &&
+              onDeleteSession;
             const hasBots = item.href === "/agents";
-            const hasBooks = item.href === "/book";
-            const hasCoWriterDocs = item.href === "/co-writer";
             return (
               <div key={item.href}>
                 <Link
@@ -235,7 +253,9 @@ export function SidebarShell({
                   <span>{t(item.label)}</span>
                 </Link>
                 {hasSessionsBelow && (
-                  <div className={`${sessionViewportClassName} overflow-y-auto`}>
+                  <div
+                    className={`${sessionViewportClassName} overflow-y-auto`}
+                  >
                     <SessionList
                       sessions={sessions}
                       activeSessionId={activeSessionId}
@@ -248,8 +268,6 @@ export function SidebarShell({
                   </div>
                 )}
                 {hasBots && <TutorBotRecent />}
-                {hasCoWriterDocs && <CoWriterRecent />}
-                {hasBooks && <BookRecent />}
               </div>
             );
           })}
@@ -279,6 +297,19 @@ export function SidebarShell({
           );
         })}
         {footerSlot}
+        <div className="mt-0.5 flex items-center gap-0.5">
+          <VersionBadge />
+          <a
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noreferrer noopener"
+            title="GitHub"
+            aria-label="GitHub"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[var(--muted-foreground)]/55 transition-colors hover:bg-[var(--background)]/50 hover:text-[var(--muted-foreground)]"
+          >
+            <Github size={13} strokeWidth={1.7} />
+          </a>
+        </div>
       </div>
     </aside>
   );

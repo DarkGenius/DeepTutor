@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -74,6 +75,11 @@ export interface MessageAttachment {
   base64?: string;
   url?: string;
   mime_type?: string;
+  /** Stable per-attachment id; matches the URL segment served by /api/attachments. */
+  id?: string;
+  /** Plain-text rendering of office docs, populated by the backend extractor.
+   *  Used by the preview drawer to show "what the LLM saw" for binary docs. */
+  extracted_text?: string;
 }
 
 export interface MessageRequestSnapshot {
@@ -130,8 +136,18 @@ type Action =
   | { type: "RESTORE_ASSISTANT"; key: string; message: MessageItem }
   | { type: "STREAM_START"; key: string }
   | { type: "STREAM_EVENT"; key: string; event: StreamEvent }
-  | { type: "STREAM_END"; key: string; status?: SessionRuntimeStatus; turnId?: string | null }
-  | { type: "BIND_SERVER_SESSION"; key: string; sessionId: string; turnId?: string | null }
+  | {
+      type: "STREAM_END";
+      key: string;
+      status?: SessionRuntimeStatus;
+      turnId?: string | null;
+    }
+  | {
+      type: "BIND_SERVER_SESSION";
+      key: string;
+      sessionId: string;
+      turnId?: string | null;
+    }
   | {
       type: "LOAD_SESSION";
       key: string;
@@ -146,7 +162,10 @@ type Action =
     }
   | { type: "NEW_SESSION"; key: string };
 
-function createSessionEntry(key: string, sessionId: string | null = null): SessionEntry {
+function createSessionEntry(
+  key: string,
+  sessionId: string | null = null,
+): SessionEntry {
   return {
     key,
     sessionId,
@@ -211,7 +230,8 @@ function reducer(state: ProviderState, action: Action): ProviderState {
         language: action.lang,
       }));
     case "ADD_USER_MSG": {
-      const session = state.sessions[action.key] ?? createSessionEntry(action.key);
+      const session =
+        state.sessions[action.key] ?? createSessionEntry(action.key);
       return {
         ...state,
         sessions: {
@@ -224,8 +244,12 @@ function reducer(state: ProviderState, action: Action): ProviderState {
                 role: "user",
                 content: action.content,
                 capability: action.capability || "",
-                ...(action.attachments?.length ? { attachments: action.attachments } : {}),
-                ...(action.requestSnapshot ? { requestSnapshot: action.requestSnapshot } : {}),
+                ...(action.attachments?.length
+                  ? { attachments: action.attachments }
+                  : {}),
+                ...(action.requestSnapshot
+                  ? { requestSnapshot: action.requestSnapshot }
+                  : {}),
               },
             ],
             updatedAt: Date.now(),
@@ -262,7 +286,7 @@ function reducer(state: ProviderState, action: Action): ProviderState {
         messages.length > 0 &&
         messages[messages.length - 1].role === "assistant" &&
         (messages[messages.length - 1].content ?? "") === "" &&
-        ((messages[messages.length - 1].events?.length ?? 0) === 0)
+        (messages[messages.length - 1].events?.length ?? 0) === 0
       ) {
         messages.pop();
       }
@@ -294,7 +318,9 @@ function reducer(state: ProviderState, action: Action): ProviderState {
                 role: "assistant",
                 content: "",
                 events: [],
-                capability: (state.sessions[action.key] ?? createSessionEntry(action.key)).activeCapability || "",
+                capability:
+                  (state.sessions[action.key] ?? createSessionEntry(action.key))
+                    .activeCapability || "",
               },
             ],
             updatedAt: Date.now(),
@@ -302,18 +328,30 @@ function reducer(state: ProviderState, action: Action): ProviderState {
         },
       };
     case "STREAM_EVENT": {
-      const session = state.sessions[action.key] ?? createSessionEntry(action.key);
+      const session =
+        state.sessions[action.key] ?? createSessionEntry(action.key);
       const msgs = [...session.messages];
       let last = msgs[msgs.length - 1];
       if (last?.role !== "assistant") {
-        msgs.push({ role: "assistant", content: "", events: [], capability: session.activeCapability || "" });
+        msgs.push({
+          role: "assistant",
+          content: "",
+          events: [],
+          capability: session.activeCapability || "",
+        });
         last = msgs[msgs.length - 1];
       }
       const events = [...(last?.events || []), action.event];
       let content = last?.content || "";
-      if (shouldAppendEventContent(action.event)) content += action.event.content;
+      if (shouldAppendEventContent(action.event))
+        content += action.event.content;
       const capability = last?.capability || session.activeCapability || "";
-      msgs[msgs.length - 1] = { ...(last || { role: "assistant", content: "" }), content, events, capability };
+      msgs[msgs.length - 1] = {
+        ...(last || { role: "assistant", content: "" }),
+        content,
+        events,
+        capability,
+      };
       return {
         ...state,
         sessions: {
@@ -346,7 +384,9 @@ function reducer(state: ProviderState, action: Action): ProviderState {
             status: action.status ?? "completed",
             activeTurnId:
               action.status === "running"
-                ? action.turnId || state.sessions[action.key]?.activeTurnId || null
+                ? action.turnId ||
+                  state.sessions[action.key]?.activeTurnId ||
+                  null
                 : null,
             updatedAt: Date.now(),
           },
@@ -354,7 +394,8 @@ function reducer(state: ProviderState, action: Action): ProviderState {
         sidebarRefreshToken: state.sidebarRefreshToken + 1,
       };
     case "BIND_SERVER_SESSION": {
-      const current = state.sessions[action.key] ?? createSessionEntry(action.key);
+      const current =
+        state.sessions[action.key] ?? createSessionEntry(action.key);
       const targetKey = action.sessionId;
       const existing = state.sessions[targetKey];
       const merged: SessionEntry = {
@@ -371,13 +412,16 @@ function reducer(state: ProviderState, action: Action): ProviderState {
       nextSessions[targetKey] = merged;
       return {
         ...state,
-        selectedKey: state.selectedKey === action.key ? targetKey : state.selectedKey,
+        selectedKey:
+          state.selectedKey === action.key ? targetKey : state.selectedKey,
         sessions: nextSessions,
         sidebarRefreshToken: state.sidebarRefreshToken + 1,
       };
     }
     case "LOAD_SESSION": {
-      const existing = state.sessions[action.key] ?? createSessionEntry(action.key, action.sessionId);
+      const existing =
+        state.sessions[action.key] ??
+        createSessionEntry(action.key, action.sessionId);
       return {
         ...state,
         selectedKey: action.key,
@@ -389,7 +433,9 @@ function reducer(state: ProviderState, action: Action): ProviderState {
             sessionId: action.sessionId,
             enabledTools: action.tools ?? existing.enabledTools,
             activeCapability:
-              action.capability !== undefined ? action.capability : existing.activeCapability,
+              action.capability !== undefined
+                ? action.capability
+                : existing.activeCapability,
             knowledgeBases: action.knowledgeBases ?? existing.knowledgeBases,
             messages: action.messages,
             isStreaming: (action.status || "idle") === "running",
@@ -404,12 +450,19 @@ function reducer(state: ProviderState, action: Action): ProviderState {
     }
     case "NEW_SESSION": {
       const MAX_CACHED_SESSIONS = 20;
-      let nextSessions = { ...state.sessions, [action.key]: createSessionEntry(action.key) };
+      let nextSessions = {
+        ...state.sessions,
+        [action.key]: createSessionEntry(action.key),
+      };
       const keys = Object.keys(nextSessions);
       if (keys.length > MAX_CACHED_SESSIONS) {
         const evictable = keys
-          .filter((k) => k !== action.key && nextSessions[k].status !== "running")
-          .sort((a, b) => nextSessions[a].updatedAt - nextSessions[b].updatedAt);
+          .filter(
+            (k) => k !== action.key && nextSessions[k].status !== "running",
+          )
+          .sort(
+            (a, b) => nextSessions[a].updatedAt - nextSessions[b].updatedAt,
+          );
         const toRemove = evictable.slice(0, keys.length - MAX_CACHED_SESSIONS);
         for (const k of toRemove) delete nextSessions[k];
       }
@@ -453,7 +506,11 @@ interface ChatContextValue {
 
 const ChatCtx = createContext<ChatContextValue | null>(null);
 
-export function UnifiedChatProvider({ children }: { children: React.ReactNode }) {
+export function UnifiedChatProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const stateRef = useRef(initialState);
   const runnersRef = useRef<
@@ -472,7 +529,7 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
   // or ``nothing_to_regenerate``). Keyed by session entry key.
   const pendingRegenerateRef = useRef<Map<string, MessageItem>>(new Map());
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     stateRef.current = state;
   }, [state]);
 
@@ -491,30 +548,35 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
     return `draft_${Date.now()}_${draftCounterRef.current}`;
   }, []);
 
-  const hydrateMessages = useCallback((messages: SessionMessage[]): MessageItem[] => {
-    // System messages (e.g. quiz follow-up grounding context written by the
-    // backend turn runtime) are LLM-only and must not surface in the chat UI.
-    return messages
-      .filter((message) => message.role !== "system")
-      .map((message) => ({
-        role: message.role,
-        content:
-          message.role === "assistant"
-            ? normalizeMarkdownForDisplay(message.content)
-            : message.content,
-        capability: message.capability || "",
-        events: Array.isArray(message.events) ? message.events : [],
-        attachments: Array.isArray(message.attachments)
-          ? message.attachments.map((item) => ({
-              type: item.type,
-              filename: item.filename,
-              base64: item.base64,
-              url: item.url,
-              mime_type: item.mime_type,
-            }))
-          : [],
-      }));
-  }, []);
+  const hydrateMessages = useCallback(
+    (messages: SessionMessage[]): MessageItem[] => {
+      // System messages (e.g. quiz follow-up grounding context written by the
+      // backend turn runtime) are LLM-only and must not surface in the chat UI.
+      return messages
+        .filter((message) => message.role !== "system")
+        .map((message) => ({
+          role: message.role,
+          content:
+            message.role === "assistant"
+              ? normalizeMarkdownForDisplay(message.content)
+              : message.content,
+          capability: message.capability || "",
+          events: Array.isArray(message.events) ? message.events : [],
+          attachments: Array.isArray(message.attachments)
+            ? message.attachments.map((item) => ({
+                type: item.type,
+                filename: item.filename,
+                base64: item.base64,
+                url: item.url,
+                mime_type: item.mime_type,
+                id: item.id,
+                extracted_text: item.extracted_text,
+              }))
+            : [],
+        }));
+    },
+    [],
+  );
 
   const moveRunner = useCallback((oldKey: string, newKey: string) => {
     if (oldKey === newKey) return;
@@ -535,7 +597,9 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
           event.session_id ||
           "";
         const turnId =
-          (event.metadata as { turn_id?: string } | undefined)?.turn_id || event.turn_id || null;
+          (event.metadata as { turn_id?: string } | undefined)?.turn_id ||
+          event.turn_id ||
+          null;
         if (sessionId) {
           dispatch({
             type: "BIND_SERVER_SESSION",
@@ -548,7 +612,10 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
         return;
       }
       if (event.type === "done") {
-        const status = String((event.metadata as { status?: string } | undefined)?.status || "completed");
+        const status = String(
+          (event.metadata as { status?: string } | undefined)?.status ||
+            "completed",
+        );
         dispatch({
           type: "STREAM_END",
           key: effectiveKey,
@@ -564,20 +631,35 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
       dispatch({ type: "STREAM_EVENT", key: effectiveKey, event });
       if (
         event.type === "error" &&
-        Boolean((event.metadata as { turn_terminal?: boolean } | undefined)?.turn_terminal)
+        Boolean(
+          (event.metadata as { turn_terminal?: boolean } | undefined)
+            ?.turn_terminal,
+        )
       ) {
-        const reason = String((event.metadata as { reason?: string } | undefined)?.reason || "");
+        const reason = String(
+          (event.metadata as { reason?: string } | undefined)?.reason || "",
+        );
         // Pre-flight regenerate rejections never mutate server state, so we
         // roll back the optimistic POP_LAST_ASSISTANT/STREAM_START placeholder
         // to keep the transcript in sync with the server.
-        if (reason === "regenerate_busy" || reason === "nothing_to_regenerate") {
+        if (
+          reason === "regenerate_busy" ||
+          reason === "nothing_to_regenerate"
+        ) {
           const stash = pendingRegenerateRef.current.get(effectiveKey);
           if (stash) {
-            dispatch({ type: "RESTORE_ASSISTANT", key: effectiveKey, message: stash });
+            dispatch({
+              type: "RESTORE_ASSISTANT",
+              key: effectiveKey,
+              message: stash,
+            });
           }
         }
         pendingRegenerateRef.current.delete(effectiveKey);
-        const status = String((event.metadata as { status?: string } | undefined)?.status || "failed");
+        const status = String(
+          (event.metadata as { status?: string } | undefined)?.status ||
+            "failed",
+        );
         dispatch({
           type: "STREAM_END",
           key: effectiveKey,
@@ -607,7 +689,11 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
           () => {
             const session = stateRef.current.sessions[record.key];
             if (session?.isStreaming) {
-              dispatch({ type: "STREAM_END", key: record.key, status: "failed" });
+              dispatch({
+                type: "STREAM_END",
+                key: record.key,
+                status: "failed",
+              });
             }
           },
         ),
@@ -643,15 +729,21 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
   const loadSession = useCallback(
     async (sessionId: string) => {
       const session = await getSession(sessionId);
-      const activeTurn = Array.isArray(session.active_turns) ? session.active_turns[0] : undefined;
+      const activeTurn = Array.isArray(session.active_turns)
+        ? session.active_turns[0]
+        : undefined;
       dispatch({
         type: "LOAD_SESSION",
         key: session.session_id || session.id,
         sessionId: session.session_id || session.id,
         messages: hydrateMessages(session.messages ?? []),
         activeTurnId: activeTurn?.turn_id || activeTurn?.id || null,
-        status: (session.status as SessionRuntimeStatus | undefined) || (activeTurn ? "running" : "idle"),
-        tools: Array.isArray(session.preferences?.tools) ? session.preferences.tools : [],
+        status:
+          (session.status as SessionRuntimeStatus | undefined) ||
+          (activeTurn ? "running" : "idle"),
+        tools: Array.isArray(session.preferences?.tools)
+          ? session.preferences.tools
+          : [],
         capability: session.preferences?.capability || null,
         knowledgeBases: Array.isArray(session.preferences?.knowledge_bases)
           ? session.preferences.knowledge_bases
@@ -672,7 +764,9 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const current = state.selectedKey ? state.sessions[state.selectedKey] : null;
+    const current = state.selectedKey
+      ? state.sessions[state.selectedKey]
+      : null;
     writeStoredActiveSessionId(current?.sessionId ?? null);
   }, [state.selectedKey, state.sessions]);
 
@@ -704,7 +798,8 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
             type: "error",
             source: "client",
             stage: "",
-            content: "Connection timed out — no response received for 60 seconds.",
+            content:
+              "Connection timed out — no response received for 60 seconds.",
             metadata: { turn_terminal: true, status: "failed" },
             timestamp: Date.now() / 1000,
           },
@@ -748,27 +843,37 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
       }
       const session = currentState.sessions[key] ?? createSessionEntry(key);
       const replaySnapshot = options?.requestSnapshotOverride;
-      const effectiveCapability = replaySnapshot?.capability ?? session.activeCapability;
-      const effectiveTools = replaySnapshot?.enabledTools ?? session.enabledTools;
-      const effectiveKnowledgeBases = replaySnapshot?.knowledgeBases ?? session.knowledgeBases;
+      const effectiveCapability =
+        replaySnapshot?.capability ?? session.activeCapability;
+      const effectiveTools =
+        replaySnapshot?.enabledTools ?? session.enabledTools;
+      const effectiveKnowledgeBases =
+        replaySnapshot?.knowledgeBases ?? session.knowledgeBases;
       const effectiveLanguage = replaySnapshot?.language ?? session.language;
       const researchSources = Array.isArray(config?.sources)
-        ? config.sources.filter((value): value is string => typeof value === "string")
+        ? config.sources.filter(
+            (value): value is string => typeof value === "string",
+          )
         : [];
       const shouldSendKnowledgeBases =
         effectiveTools.includes("rag") ||
-        (effectiveCapability === "deep_research" && researchSources.includes("kb"));
+        (effectiveCapability === "deep_research" &&
+          researchSources.includes("kb"));
       const effectiveSkills = replaySnapshot?.skills ?? skills;
       const requestSnapshot: MessageRequestSnapshot = replaySnapshot ?? {
         content,
         capability: effectiveCapability,
         enabledTools: [...effectiveTools],
-        knowledgeBases: shouldSendKnowledgeBases ? [...effectiveKnowledgeBases] : [],
+        knowledgeBases: shouldSendKnowledgeBases
+          ? [...effectiveKnowledgeBases]
+          : [],
         language: effectiveLanguage,
         ...(msgAttachments?.length ? { attachments: msgAttachments } : {}),
         ...(config && Object.keys(config).length > 0 ? { config } : {}),
         ...(notebookReferences?.length ? { notebookReferences } : {}),
-        ...(historyReferences?.length ? { historyReferences: [...historyReferences] } : {}),
+        ...(historyReferences?.length
+          ? { historyReferences: [...historyReferences] }
+          : {}),
         ...(questionNotebookReferences?.length
           ? { questionNotebookReferences: [...questionNotebookReferences] }
           : {}),
@@ -794,7 +899,9 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
         content,
         tools: effectiveTools,
         capability: effectiveCapability,
-        knowledge_bases: shouldSendKnowledgeBases ? effectiveKnowledgeBases : [],
+        knowledge_bases: shouldSendKnowledgeBases
+          ? effectiveKnowledgeBases
+          : [],
         session_id: session.sessionId,
         attachments,
         language: effectiveLanguage,
@@ -839,7 +946,9 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
     const session = currentState.sessions[key];
     if (!session || !session.sessionId) return;
     if (session.isStreaming) return;
-    const lastUser = [...session.messages].reverse().find((m) => m.role === "user");
+    const lastUser = [...session.messages]
+      .reverse()
+      .find((m) => m.role === "user");
     if (!lastUser) return;
     // Snapshot the trailing assistant (if any) so we can put it back when the
     // server rejects the request. We intentionally keep events/attachments so
@@ -927,6 +1036,7 @@ export function UnifiedChatProvider({ children }: { children: React.ReactNode })
 
 export function useUnifiedChat() {
   const ctx = useContext(ChatCtx);
-  if (!ctx) throw new Error("useUnifiedChat must be inside UnifiedChatProvider");
+  if (!ctx)
+    throw new Error("useUnifiedChat must be inside UnifiedChatProvider");
   return ctx;
 }

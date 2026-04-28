@@ -4,9 +4,8 @@ DecomposeAgent - Topic decomposition Agent
 Responsible for decomposing topics into multiple subtopics and generating overviews for each subtopic
 """
 
-from typing import Any
-
 import json
+from typing import Any
 
 from deeptutor.agents.base_agent import BaseAgent
 from deeptutor.agents.research.data_structures import ToolTrace
@@ -96,19 +95,20 @@ class DecomposeAgent(BaseAgent):
             "\n<conversation_history>\n"
             "The following is the conversation history of this session. "
             "If the user's current request references or modifies a previous outline, "
-            "use this history as context.\n\n"
-            + "\n\n".join(parts)
-            + "\n</conversation_history>\n"
+            "use this history as context.\n\n" + "\n\n".join(parts) + "\n</conversation_history>\n"
         )
 
     def _get_mode_contract(self, stage: str) -> str:
         return (
-            self.get_prompt("mode_contracts", f"{self._research_style}_{stage}", "")
-            or ""
+            self.get_prompt("mode_contracts", f"{self._research_style}_{stage}", "") or ""
         ).strip()
 
     async def process(
-        self, topic: str, num_subtopics: int = 5, mode: str = "manual"
+        self,
+        topic: str,
+        num_subtopics: int = 5,
+        mode: str = "manual",
+        attachments: list[Any] | None = None,
     ) -> dict[str, Any]:
         """
         Decompose topic into subtopics and generate overview for each subtopic
@@ -147,7 +147,7 @@ class DecomposeAgent(BaseAgent):
         # If RAG is disabled, use direct LLM generation without RAG context
         if not self.enable_rag:
             print("⚠️ RAG is disabled, generating subtopics directly from LLM...")
-            return await self._process_without_rag(topic, num_subtopics, mode)
+            return await self._process_without_rag(topic, num_subtopics, mode, attachments)
 
         print("\n🔍 Step 1: Executing RAG retrieval to get background knowledge...")
         rag_context, source_query = await self._retrieve_background_knowledge(topic)
@@ -155,11 +155,17 @@ class DecomposeAgent(BaseAgent):
         print("\n🎯 Step 2: Generating subtopics...")
         if mode == "auto":
             sub_topics = await self._generate_sub_topics_auto(
-                topic=topic, rag_context=rag_context, max_subtopics=num_subtopics
+                topic=topic,
+                rag_context=rag_context,
+                max_subtopics=num_subtopics,
+                attachments=attachments,
             )
         else:
             sub_topics = await self._generate_sub_topics(
-                topic=topic, rag_context=rag_context, num_subtopics=num_subtopics
+                topic=topic,
+                rag_context=rag_context,
+                num_subtopics=num_subtopics,
+                attachments=attachments,
             )
 
         print(f"✓ Generated {len(sub_topics)} subtopics")
@@ -217,7 +223,11 @@ class DecomposeAgent(BaseAgent):
             return "", source_query
 
     async def _process_without_rag(
-        self, topic: str, num_subtopics: int, mode: str = "manual"
+        self,
+        topic: str,
+        num_subtopics: int,
+        mode: str = "manual",
+        attachments: list[Any] | None = None,
     ) -> dict[str, Any]:
         """
         Process without RAG: directly generate subtopics from LLM based on topic.
@@ -272,13 +282,14 @@ Generate exactly {num_subtopics} subtopics. Please ensure exactly {num_subtopics
             user_prompt=user_prompt,
             system_prompt=system_prompt,
             stage="decompose_no_rag",
+            attachments=attachments,
             trace_meta=self._build_trace_meta(mode),
         ):
             _chunks.append(_c)
         response = "".join(_chunks)
 
         # Parse JSON output
-        from ..utils.json_utils import ensure_json_dict, ensure_keys, extract_json_from_text
+        from ..utils.json_utils import ensure_json_dict, ensure_keys
 
         data = extract_json_from_text(response)
         try:
@@ -311,7 +322,11 @@ Generate exactly {num_subtopics} subtopics. Please ensure exactly {num_subtopics
         }
 
     async def _generate_sub_topics_auto(
-        self, topic: str, rag_context: str, max_subtopics: int
+        self,
+        topic: str,
+        rag_context: str,
+        max_subtopics: int,
+        attachments: list[Any] | None = None,
     ) -> list[dict[str, str]]:
         """
         Auto mode: Autonomously generate subtopics based on RAG background
@@ -358,13 +373,14 @@ Dynamically generate no more than {max_subtopics} subtopics. Please carefully an
             user_prompt=user_prompt,
             system_prompt=system_prompt,
             stage="decompose",
+            attachments=attachments,
             trace_meta=self._build_trace_meta("auto"),
         ):
             _chunks.append(_c)
         response = "".join(_chunks)
 
         # Parse JSON output (strict validation)
-        from ..utils.json_utils import ensure_json_dict, ensure_keys, extract_json_from_text
+        from ..utils.json_utils import ensure_json_dict, ensure_keys
 
         data = extract_json_from_text(response)
         try:
@@ -386,7 +402,11 @@ Dynamically generate no more than {max_subtopics} subtopics. Please carefully an
             return []
 
     async def _generate_sub_topics(
-        self, topic: str, rag_context: str, num_subtopics: int
+        self,
+        topic: str,
+        rag_context: str,
+        num_subtopics: int,
+        attachments: list[Any] | None = None,
     ) -> list[dict[str, str]]:
         """
         Generate subtopics based on RAG background
@@ -430,13 +450,14 @@ Explicitly generate {num_subtopics} subtopics. Please ensure exactly {num_subtop
             user_prompt=user_prompt,
             system_prompt=system_prompt,
             stage="decompose",
+            attachments=attachments,
             trace_meta=self._build_trace_meta("manual"),
         ):
             _chunks.append(_c)
         response = "".join(_chunks)
 
         # Parse JSON output (strict validation)
-        from ..utils.json_utils import ensure_json_dict, ensure_keys, extract_json_from_text
+        from ..utils.json_utils import ensure_json_dict, ensure_keys
 
         data = extract_json_from_text(response)
         try:

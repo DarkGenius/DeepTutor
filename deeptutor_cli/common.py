@@ -27,10 +27,11 @@ def parse_config_items(items: list[str]) -> dict[str, Any]:
 
 
 def parse_json_object(raw: str | None) -> dict[str, Any]:
-    if not raw:
+    normalized = (raw or "").strip()
+    if not normalized:
         return {}
     try:
-        value = json.loads(raw)
+        value = json.loads(normalized)
     except json.JSONDecodeError as exc:
         raise ValueError(f"Invalid JSON config: {exc.msg}") from exc
     if not isinstance(value, dict):
@@ -46,9 +47,7 @@ def parse_notebook_references(items: list[str]) -> list[dict[str, Any]]:
         if not resolved_notebook_id:
             raise ValueError(f"Invalid notebook reference `{item}`.")
         record_ids = [
-            record_id.strip()
-            for record_id in record_part.split(",")
-            if record_id.strip()
+            record_id.strip() for record_id in record_part.split(",") if record_id.strip()
         ]
         refs.append({"notebook_id": resolved_notebook_id, "record_ids": record_ids})
     return refs

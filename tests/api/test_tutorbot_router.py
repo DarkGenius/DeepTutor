@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import importlib
 from typing import Any
 from unittest.mock import MagicMock
@@ -23,6 +24,7 @@ pytestmark = pytest.mark.skipif(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_fake_manager(existing: dict | None = None):
     """Return a (manager, saved) pair.
@@ -94,6 +96,7 @@ def _make_client(monkeypatch, existing: dict | None = None):
 # Tests
 # ---------------------------------------------------------------------------
 
+
 class TestCreateBotPreservesExistingConfig:
     """Regression tests for the config-wipe bug (issue #331 / PR #332).
 
@@ -110,9 +113,7 @@ class TestCreateBotPreservesExistingConfig:
                 "allow_from": ["999"],
             }
         }
-        client, saved = _make_client(
-            monkeypatch, existing={"channels": existing_channels}
-        )
+        client, saved = _make_client(monkeypatch, existing={"channels": existing_channels})
 
         resp = client.post("/api/v1/tutorbot", json={"bot_id": "my-bot"})
 
@@ -126,9 +127,7 @@ class TestCreateBotPreservesExistingConfig:
         existing_channels = {"telegram": {"enabled": True, "token": "old"}}
         new_channels = {"slack": {"enabled": True, "token": "new-slack-token"}}
 
-        client, saved = _make_client(
-            monkeypatch, existing={"channels": existing_channels}
-        )
+        client, saved = _make_client(monkeypatch, existing={"channels": existing_channels})
 
         resp = client.post(
             "/api/v1/tutorbot",
@@ -240,9 +239,7 @@ class TestCreateBotExplicitClearSemantics:
         because a form input was unset) does NOT clobber the existing value —
         only an explicit empty string does that.
         """
-        client, saved = _make_client(
-            monkeypatch, existing={"description": "Disk Desc"}
-        )
+        client, saved = _make_client(monkeypatch, existing={"description": "Disk Desc"})
 
         resp = client.post(
             "/api/v1/tutorbot",
@@ -318,7 +315,9 @@ class TestPatchBotStoppedAndRunning:
                     channels={"telegram": {"enabled": False, "token": ""}},
                 )
 
-            def save_bot_config(self, bot_id: str, config: BotConfig, *, auto_start: bool = True) -> None:
+            def save_bot_config(
+                self, bot_id: str, config: BotConfig, *, auto_start: bool = True
+            ) -> None:
                 saved_cfg.append(config)
 
         tutorbot_router_mod = importlib.import_module("deeptutor.api.routers.tutorbot")
@@ -358,7 +357,9 @@ class TestPatchBotStoppedAndRunning:
                 return {
                     "bot_id": "b",
                     "name": self.config.name,
-                    "channels": [] if not (include_secrets or mask_secrets) else self.config.channels,
+                    "channels": []
+                    if not (include_secrets or mask_secrets)
+                    else self.config.channels,
                     "running": True,
                     "last_reload_error": self.last_reload_error,
                 }
@@ -369,7 +370,9 @@ class TestPatchBotStoppedAndRunning:
             def get_bot(self, bot_id: str):
                 return inst if bot_id == "b" else None
 
-            def save_bot_config(self, bot_id: str, config: BotConfig, *, auto_start: bool = True) -> None:
+            def save_bot_config(
+                self, bot_id: str, config: BotConfig, *, auto_start: bool = True
+            ) -> None:
                 pass
 
             async def reload_channels(self, bot_id: str) -> None:
@@ -382,7 +385,9 @@ class TestPatchBotStoppedAndRunning:
         app.include_router(tutorbot_router_mod.router, prefix="/api/v1/tutorbot")
         client = TestClient(app)
 
-        resp = client.patch("/api/v1/tutorbot/b", json={"channels": {"telegram": {"enabled": False}}})
+        resp = client.patch(
+            "/api/v1/tutorbot/b", json={"channels": {"telegram": {"enabled": False}}}
+        )
         assert resp.status_code == 200
         assert reloaded == [True]
 
@@ -399,7 +404,9 @@ class TestPatchBotStoppedAndRunning:
             def load_bot_config(self, bot_id: str) -> BotConfig | None:
                 return BotConfig(name="b")
 
-            def save_bot_config(self, bot_id: str, config: BotConfig, *, auto_start: bool = True) -> None:
+            def save_bot_config(
+                self, bot_id: str, config: BotConfig, *, auto_start: bool = True
+            ) -> None:
                 saved_cfg.append(config)
 
         tutorbot_router_mod = importlib.import_module("deeptutor.api.routers.tutorbot")
@@ -440,7 +447,9 @@ class TestPatchBotStoppedAndRunning:
             def get_bot(self, bot_id: str):
                 return FakeInst()
 
-            def save_bot_config(self, bot_id: str, config: BotConfig, *, auto_start: bool = True) -> None:
+            def save_bot_config(
+                self, bot_id: str, config: BotConfig, *, auto_start: bool = True
+            ) -> None:
                 pass
 
             async def reload_channels(self, bot_id: str) -> None:
@@ -461,3 +470,183 @@ class TestPatchBotStoppedAndRunning:
         detail = resp.json()["detail"]
         assert "RuntimeError" in detail
         assert "stopping and starting" in detail.lower()
+
+
+class TestBotChatWebSocketStartup:
+    """WebSocket endpoint should auto-start stopped configured bots."""
+
+    def test_ws_autostarts_stopped_bot(self, monkeypatch):
+        from deeptutor.services.tutorbot.manager import BotConfig
+
+        class FakeInstance:
+            running = True
+
+            def __init__(self):
+                self.notify_queue = asyncio.Queue()
+
+        class FakeMgr:
+            def __init__(self):
+                self.started: list[str] = []
+
+            def get_bot(self, bot_id: str):
+                return None
+
+            def load_bot_config(self, bot_id: str):
+                return BotConfig(name=bot_id)
+
+            async def start_bot(self, bot_id: str, config: BotConfig):
+                self.started.append(bot_id)
+                return FakeInstance()
+
+        mgr = FakeMgr()
+        tutorbot_router_mod = importlib.import_module("deeptutor.api.routers.tutorbot")
+        monkeypatch.setattr(tutorbot_router_mod, "get_tutorbot_manager", lambda: mgr)
+
+        app = FastAPI()
+        app.include_router(tutorbot_router_mod.router, prefix="/api/v1/tutorbot")
+        client = TestClient(app)
+
+        with client.websocket_connect("/api/v1/tutorbot/ielts-tutor/ws") as ws:
+            ws.close()
+
+        assert mgr.started == ["ielts-tutor"]
+
+    def test_ws_unknown_bot_returns_error_payload(self, monkeypatch):
+        class FakeMgr:
+            def get_bot(self, bot_id: str):
+                return None
+
+            def load_bot_config(self, bot_id: str):
+                return None
+
+        tutorbot_router_mod = importlib.import_module("deeptutor.api.routers.tutorbot")
+        monkeypatch.setattr(tutorbot_router_mod, "get_tutorbot_manager", lambda: FakeMgr())
+
+        app = FastAPI()
+        app.include_router(tutorbot_router_mod.router, prefix="/api/v1/tutorbot")
+        client = TestClient(app)
+
+        with client.websocket_connect("/api/v1/tutorbot/missing/ws") as ws:
+            payload = ws.receive_json()
+            assert payload["type"] == "error"
+            assert "not found" in payload["content"].lower()
+
+    def test_ws_reuses_running_bot_on_reconnect(self, monkeypatch):
+        """A second WS connect must not re-trigger start_bot if bot is running."""
+        from deeptutor.services.tutorbot.manager import BotConfig
+
+        class FakeInstance:
+            running = True
+
+            def __init__(self):
+                self.notify_queue = asyncio.Queue()
+
+        class FakeMgr:
+            def __init__(self):
+                self.start_calls = 0
+                self._instance: FakeInstance | None = None
+
+            def get_bot(self, bot_id: str):
+                return self._instance
+
+            def load_bot_config(self, bot_id: str):
+                return BotConfig(name=bot_id)
+
+            async def start_bot(self, bot_id: str, config: BotConfig):
+                self.start_calls += 1
+                self._instance = FakeInstance()
+                return self._instance
+
+        mgr = FakeMgr()
+        tutorbot_router_mod = importlib.import_module("deeptutor.api.routers.tutorbot")
+        monkeypatch.setattr(tutorbot_router_mod, "get_tutorbot_manager", lambda: mgr)
+        # Ensure no leftover lock from a prior test affects this one.
+        tutorbot_router_mod._start_locks.clear()
+
+        app = FastAPI()
+        app.include_router(tutorbot_router_mod.router, prefix="/api/v1/tutorbot")
+        client = TestClient(app)
+
+        with client.websocket_connect("/api/v1/tutorbot/dedup-bot/ws") as ws:
+            ws.close()
+        with client.websocket_connect("/api/v1/tutorbot/dedup-bot/ws") as ws:
+            ws.close()
+
+        assert mgr.start_calls == 1
+
+
+class TestStartLockDedup:
+    """Direct test that the per-bot start lock serializes concurrent starts."""
+
+    def test_get_start_lock_serializes_concurrent_blocks(self):
+        tutorbot_router_mod = importlib.import_module("deeptutor.api.routers.tutorbot")
+        tutorbot_router_mod._start_locks.clear()
+
+        async def runner():
+            in_critical = 0
+            max_in_critical = 0
+            start_calls = 0
+
+            async def fake_start():
+                nonlocal in_critical, max_in_critical, start_calls
+                lock = await tutorbot_router_mod._get_start_lock("concurrent-bot")
+                async with lock:
+                    in_critical += 1
+                    max_in_critical = max(max_in_critical, in_critical)
+                    await asyncio.sleep(0.02)
+                    start_calls += 1
+                    in_critical -= 1
+
+            await asyncio.gather(fake_start(), fake_start(), fake_start())
+            return start_calls, max_in_critical
+
+        start_calls, max_in_critical = asyncio.run(runner())
+        assert start_calls == 3
+        assert max_in_critical == 1
+
+
+class TestBotChatWebSocketResilience:
+    """The WS handler must tolerate client disconnects during a turn."""
+
+    def test_ws_loop_breaks_on_client_disconnect_before_message(self, monkeypatch):
+        from deeptutor.services.tutorbot.manager import BotConfig
+
+        class FakeInstance:
+            running = True
+
+            def __init__(self):
+                self.notify_queue = asyncio.Queue()
+
+        class FakeMgr:
+            def __init__(self):
+                self.send_calls = 0
+
+            def get_bot(self, bot_id: str):
+                return FakeInstance()
+
+            def load_bot_config(self, bot_id: str):
+                return BotConfig(name=bot_id)
+
+            async def start_bot(self, bot_id: str, config: BotConfig):
+                return FakeInstance()
+
+            async def send_message(self, *args, **kwargs):
+                self.send_calls += 1
+                return "should not be reached"
+
+        mgr = FakeMgr()
+        tutorbot_router_mod = importlib.import_module("deeptutor.api.routers.tutorbot")
+        monkeypatch.setattr(tutorbot_router_mod, "get_tutorbot_manager", lambda: mgr)
+        tutorbot_router_mod._start_locks.clear()
+
+        app = FastAPI()
+        app.include_router(tutorbot_router_mod.router, prefix="/api/v1/tutorbot")
+        client = TestClient(app)
+
+        # Open and immediately close without sending any payload. Both task
+        # loops should observe the disconnect and exit cleanly without a
+        # background task error.
+        with client.websocket_connect("/api/v1/tutorbot/d-bot/ws") as ws:
+            ws.close()
+
+        assert mgr.send_calls == 0

@@ -1,7 +1,8 @@
 import asyncio
-import traceback
-from datetime import datetime
 from dataclasses import asdict
+from datetime import datetime
+import json
+import traceback
 from typing import AsyncGenerator, Literal
 import uuid
 
@@ -9,8 +10,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
-import json
-
+from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
 from deeptutor.co_writer.edit_agent import (
     TOOL_CALLS_DIR,
     EditAgent,
@@ -24,11 +24,11 @@ from deeptutor.co_writer.storage import (
     CoWriterDocumentSummary,
     get_co_writer_storage,
 )
-from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.stream_bus import StreamBus
 from deeptutor.logging import get_logger
 from deeptutor.services.config import PROJECT_ROOT, load_config_with_main
+from deeptutor.services.llm import clean_thinking_tags
 from deeptutor.services.settings.interface_settings import get_ui_language
 
 router = APIRouter()
@@ -184,6 +184,10 @@ def _strip_markdown_fence(text: str) -> str:
     return cleaned
 
 
+def _clean_react_edit_output(text: str, *, binding: str | None, model: str | None) -> str:
+    return _strip_markdown_fence(clean_thinking_tags(text, binding, model))
+
+
 def _prepare_react_edit_request(
     request: ReactEditRequest, language: str
 ) -> tuple[str, str, list[str], list[str], str]:
@@ -199,7 +203,11 @@ def _prepare_react_edit_request(
 
     selected_text = request.selected_text.strip("\n")
     if not selected_text.strip():
-        detail = "请先选中一段文本。" if language.startswith("zh") else "Please select a text passage first."
+        detail = (
+            "请先选中一段文本。"
+            if language.startswith("zh")
+            else "Please select a text passage first."
+        )
         raise HTTPException(status_code=400, detail=detail)
 
     knowledge_bases = [request.kb_name] if request.kb_name and "rag" in tools else []
@@ -218,8 +226,8 @@ async def _run_react_edit(
     language: str,
     stream: StreamBus | None = None,
 ) -> dict[str, object]:
-    selected_text, instruction, tools, knowledge_bases, prompt = (
-        _prepare_react_edit_request(request, language)
+    selected_text, instruction, tools, knowledge_bases, prompt = _prepare_react_edit_request(
+        request, language
     )
     operation_id = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:6]
 
@@ -263,7 +271,9 @@ async def _run_react_edit(
         if language.startswith("zh"):
             final_prompt += f"\n内部推理摘要（不要暴露给用户）:\n{thinking_text.strip()}\n"
         else:
-            final_prompt += f"\nInternal reasoning summary (do not reveal):\n{thinking_text.strip()}\n"
+            final_prompt += (
+                f"\nInternal reasoning summary (do not reveal):\n{thinking_text.strip()}\n"
+            )
     if tool_traces:
         formatted_traces = pipeline._format_tool_traces(tool_traces)
         if language.startswith("zh"):
@@ -304,7 +314,11 @@ async def _run_react_edit(
                     stage="responding",
                 )
 
-    edited_text = _strip_markdown_fence("".join(response_chunks))
+    edited_text = _clean_react_edit_output(
+        "".join(response_chunks),
+        binding=agent.binding,
+        model=agent.get_model(),
+    )
 
     tool_call_file = None
     if tool_traces:
@@ -605,9 +619,7 @@ async def update_document(doc_id: str, request: UpdateDocumentRequest) -> Docume
     """Update a Co-Writer document (title and/or content)."""
     try:
         storage = get_co_writer_storage()
-        document = storage.update_document(
-            doc_id, title=request.title, content=request.content
-        )
+        document = storage.update_document(doc_id, title=request.title, content=request.content)
         if document is None:
             raise HTTPException(status_code=404, detail="Document not found")
         return DocumentResponse.from_model(document)
@@ -632,4 +644,3 @@ async def delete_document(doc_id: str) -> dict[str, bool]:
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-

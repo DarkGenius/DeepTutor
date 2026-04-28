@@ -25,6 +25,12 @@ WORKDIR /app/web
 # Accept build argument for backend port
 ARG BACKEND_PORT=8001
 
+# Application version (e.g. "v1.2.3"). Passed by CI from the release tag
+# and inlined into the Next.js bundle via NEXT_PUBLIC_APP_VERSION so the
+# sidebar version badge can compare it with the latest GitHub release.
+ARG APP_VERSION=""
+ENV APP_VERSION=$APP_VERSION
+
 # Copy package files first for better caching
 COPY web/package.json web/package-lock.json* ./
 
@@ -97,6 +103,8 @@ RUN pip install --upgrade pip && \
 # ============================================
 FROM python:3.11-slim AS production
 
+ARG APP_VERSION=""
+
 # Labels
 LABEL maintainer="DeepTutor Team" \
       description="DeepTutor: AI-Powered Personalized Learning Assistant" \
@@ -107,6 +115,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONIOENCODING=utf-8 \
     NODE_ENV=production \
+    APP_VERSION=${APP_VERSION} \
+    NEXT_PUBLIC_APP_VERSION=${APP_VERSION} \
     # Default ports (can be overridden)
     BACKEND_PORT=8001 \
     FRONTEND_PORT=3782

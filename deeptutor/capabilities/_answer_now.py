@@ -35,10 +35,12 @@ from deeptutor.services.llm import (
     clean_thinking_tags,
     get_llm_config,
     get_token_limit_kwargs,
+    supports_response_format,
+)
+from deeptutor.services.llm import (
     stream as llm_stream,
 )
 from deeptutor.services.prompt.manager import get_prompt_manager
-
 
 # Per-event content cap. The trace can grow unbounded (especially for
 # deep_research / deep_solve with many tool calls) so we truncate each
@@ -133,9 +135,7 @@ def make_skip_notice(*, capability: str, language: str, stages_skipped: list[str
         return ""
     if language.startswith("zh"):
         joined = "、".join(stages_skipped)
-        return (
-            f"> ⚡ 已跳过 `{capability}` 的 {joined} 阶段，以下为基于已有信息的快速结果。"
-        )
+        return f"> ⚡ 已跳过 `{capability}` 的 {joined} 阶段，以下为基于已有信息的快速结果。"
     joined = ", ".join(stages_skipped)
     return (
         f"> ⚡ Skipped {joined} stage(s) of `{capability}`; the result below is "
@@ -198,7 +198,9 @@ async def stream_synthesis(
     if model:
         extra_kwargs.update(get_token_limit_kwargs(model, max_tokens))
     if response_format is not None:
-        extra_kwargs["response_format"] = response_format
+        binding = getattr(llm_config, "binding", None) or "openai"
+        if supports_response_format(binding, model):
+            extra_kwargs["response_format"] = response_format
 
     chunks: list[str] = []
     try:

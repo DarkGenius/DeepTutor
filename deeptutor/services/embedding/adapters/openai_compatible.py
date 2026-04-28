@@ -6,7 +6,12 @@ from typing import Any, Dict
 
 import httpx
 
-from .base import BaseEmbeddingAdapter, EmbeddingRequest, EmbeddingResponse
+from .base import (
+    BaseEmbeddingAdapter,
+    EmbeddingProviderError,
+    EmbeddingRequest,
+    EmbeddingResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -85,10 +90,7 @@ class OpenAICompatibleEmbeddingAdapter(BaseEmbeddingAdapter):
             first = c[0]
             # list of {"embedding":[...]}
             if isinstance(first, dict) and "embedding" in first:
-                return [
-                    item.get("embedding") or []
-                    for item in c if isinstance(item, dict)
-                ]
+                return [item.get("embedding") or [] for item in c if isinstance(item, dict)]
             # list of vectors [[...], ...]
             if isinstance(first, list):
                 return [item for item in c if isinstance(item, list)]
@@ -103,6 +105,29 @@ class OpenAICompatibleEmbeddingAdapter(BaseEmbeddingAdapter):
     _RETRY_BACKOFF = 1.0
     _RATE_LIMIT_BACKOFF = 5.0
 
+    def _should_send_dimensions(self, model_name: str | None) -> bool:
+        """Decide whether to attach `dimensions` to the request payload.
+
+        Tri-state semantics driven by `self.send_dimensions`:
+        * ``True``  -> always send (user explicitly opted in)
+        * ``False`` -> never send (user explicitly opted out)
+        * ``None``  -> auto: send for known model families that accept the
+          OpenAI-style ``dimensions`` parameter — OpenAI ``text-embedding-3*``,
+          Qwen3-Embedding, Qwen3-VL-Embedding.
+        """
+        if self.send_dimensions is True:
+            return True
+        if self.send_dimensions is False:
+            return False
+        if not model_name:
+            return False
+        lname = model_name.lower()
+        if lname.startswith("text-embedding-3"):
+            return True
+        if "qwen3-embedding" in lname or "qwen3-vl-embedding" in lname:
+            return True
+        return False
+
     async def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:
         import asyncio
 
@@ -114,25 +139,30 @@ class OpenAICompatibleEmbeddingAdapter(BaseEmbeddingAdapter):
             headers["Authorization"] = f"Bearer {self.api_key}"
         headers.update({str(k): str(v) for k, v in self.extra_headers.items()})
 
+        # Multimodal: pass `contents` through as `input` when set. SiliconFlow's
+        # Qwen3-VL family accepts mixed [{"text"}, {"image"}] arrays in `input`.
+        # Pure text-only OpenAI rejects them; that's on the user to pair models
+        # and providers correctly.
+        input_payload: Any = request.contents if request.contents else request.texts
+
         payload = {
-            "input": request.texts,
+            "input": input_payload,
             "model": request.model or self.model,
             "encoding_format": request.encoding_format or "float",
         }
 
-        # Only models in MODELS_INFO are known to accept the `dimensions` param
-        # (OpenAI matryoshka embeddings). Sending it to third-party endpoints
-        # like Qodo-Embed-1-7B makes them reject the request with HTTP 400.
-        if payload["model"] in self.MODELS_INFO:
-            dims = request.dimensions or self.dimensions
-            if dims:
-                payload["dimensions"] = dims
+        # `dimensions` is opt-in. The user's `send_dimensions` flag wins when set
+        # explicitly (True/False); otherwise we fall back to a model-family
+        # heuristic since only OpenAI's text-embedding-3* family officially
+        # supports the param — other providers (e.g. Qwen text-embedding-v4 via
+        # litellm gateway) return HTTP 400 if we send it.
+        dim_value = request.dimensions or self.dimensions
+        if dim_value and self._should_send_dimensions(request.model or self.model):
+            payload["dimensions"] = dim_value
 
-        base = self.base_url.rstrip('/')
-        if base.endswith('/embeddings'):
-            url = base
-        else:
-            url = f"{base}/embeddings"
+        # URL transparency: hit `base_url` verbatim. Azure's `?api-version=...`
+        # is a query param (not a path component) so we still append it.
+        url = self.base_url
         if self.api_version:
             if "?" not in url:
                 url += f"?api-version={self.api_version}"
@@ -156,33 +186,84 @@ class OpenAICompatibleEmbeddingAdapter(BaseEmbeddingAdapter):
                     # Handle rate limiting (429) with retry
                     if response.status_code == 429:
                         retry_after = float(response.headers.get("Retry-After", 0))
-                        wait = max(retry_after, self._RATE_LIMIT_BACKOFF * (2 ** attempt))
+                        wait = max(retry_after, self._RATE_LIMIT_BACKOFF * (2**attempt))
                         logger.warning(
                             f"Rate limited (429) on attempt {attempt + 1}/{1 + self._MAX_RETRIES}, "
                             f"retrying in {wait:.1f}s..."
                         )
                         await asyncio.sleep(wait)
-                        last_exc = Exception(f"HTTP 429 Too Many Requests")
+                        last_exc = Exception("HTTP 429 Too Many Requests")
                         continue
 
                     if response.status_code >= 400:
-                        logger.error(f"HTTP {response.status_code} response body: {response.text}")
+                        body_text = response.text
+                        logger.error(
+                            f"HTTP {response.status_code} from {url}: {body_text[:2000]}"
+                        )
+                        raise EmbeddingProviderError(
+                            f"Embedding provider returned HTTP {response.status_code}",
+                            status=response.status_code,
+                            body=body_text,
+                            model=request.model or self.model,
+                            url=url,
+                            provider="openai_compat",
+                        )
 
-                    response.raise_for_status()
-                    data = response.json()
+                    # A 2xx response with non-JSON body means the gateway either
+                    # doesn't expose `/v1/embeddings` (e.g. OpenRouter, which is
+                    # chat-completion-only) or routed us to an HTML error page.
+                    # Surface that as a structured error rather than a bare
+                    # JSONDecodeError so the diagnostics UI can guide the user.
+                    try:
+                        data = response.json()
+                    except (json.JSONDecodeError, ValueError) as exc:
+                        body_text = response.text
+                        content_type = response.headers.get("content-type", "")
+                        body_preview = body_text.strip()[:200] or "<empty body>"
+                        hint = ""
+                        if not body_text.strip():
+                            hint = (
+                                " The response body was empty — the endpoint may "
+                                "not support embeddings (e.g. OpenRouter is "
+                                "chat-completion only)."
+                            )
+                        elif "text/html" in content_type.lower() or body_preview.lstrip().startswith("<"):
+                            hint = (
+                                " The response was HTML, not JSON — the URL is "
+                                "likely wrong or the gateway does not expose "
+                                "`/v1/embeddings`."
+                            )
+                        raise EmbeddingProviderError(
+                            (
+                                f"Embedding provider returned non-JSON response "
+                                f"(content-type={content_type!r}): {exc}.{hint}"
+                            ),
+                            status=response.status_code,
+                            body=body_text,
+                            model=request.model or self.model,
+                            url=url,
+                            provider="openai_compat",
+                        ) from exc
                 break
-            except (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.PoolTimeout) as exc:
+            except httpx.TransportError as exc:
+                # httpx.TransportError covers all transient transport-layer
+                # failures: ConnectError, ReadError, WriteError, ConnectTimeout,
+                # ReadTimeout, WriteTimeout, PoolTimeout, RemoteProtocolError, etc.
+                # Retrying any of these with backoff is safe and obviates the
+                # need to keep extending an explicit allow-list.
                 last_exc = exc
                 if attempt < self._MAX_RETRIES:
-                    wait = self._RETRY_BACKOFF * (2 ** attempt)
+                    wait = self._RETRY_BACKOFF * (2**attempt)
                     logger.warning(
-                        f"Embedding request timeout (attempt {attempt + 1}/{1 + self._MAX_RETRIES}), "
+                        f"Embedding request transport error ({type(exc).__name__}: {exc}) "
+                        f"on attempt {attempt + 1}/{1 + self._MAX_RETRIES}, "
                         f"retrying in {wait:.1f}s..."
                     )
                     await asyncio.sleep(wait)
                 else:
                     logger.error(
-                        f"Embedding request failed after {1 + self._MAX_RETRIES} attempts: {exc}"
+                        f"Embedding request failed after {1 + self._MAX_RETRIES} attempts "
+                        f"({type(exc).__name__}: {exc})"
                     )
                     raise
         else:

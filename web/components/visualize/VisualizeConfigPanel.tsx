@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   summarizeVisualizeConfig,
@@ -18,7 +19,7 @@ interface VisualizeConfigPanelProps {
   onToggleCollapsed: () => void;
 }
 
-export default function VisualizeConfigPanel({
+export default memo(function VisualizeConfigPanel({
   value,
   onChange,
   collapsed,
@@ -37,7 +38,10 @@ export default function VisualizeConfigPanel({
         <select
           value={value.render_mode}
           onChange={(e) =>
-            onChange({ ...value, render_mode: e.target.value as VisualizeFormConfig["render_mode"] })
+            onChange({
+              ...value,
+              render_mode: e.target.value as VisualizeFormConfig["render_mode"],
+            })
           }
           className={`${INPUT_CLS} w-full`}
         >
@@ -50,4 +54,4 @@ export default function VisualizeConfigPanel({
       </Field>
     </CollapsibleConfigSection>
   );
-}
+});

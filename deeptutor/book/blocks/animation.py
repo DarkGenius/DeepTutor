@@ -31,7 +31,8 @@ class AnimationGenerator(BlockGenerator):
         if importlib.util.find_spec("manim") is None:
             raise GenerationFailure(
                 "AnimationGenerator requires the optional math-animator extras. "
-                "Install with `pip install -r requirements/math-animator.txt`."
+                "Install with `pip install -e '.[math-animator]'` "
+                "or `pip install -r requirements/math-animator.txt`."
             )
 
         params = ctx.block.params
@@ -54,7 +55,7 @@ class AnimationGenerator(BlockGenerator):
         focus_clause = f" focusing on {focus}" if focus else ""
         user_input = (
             f"Create a short Manim animation that walks through the core "
-            f"derivation of \"{chapter_title}\"{focus_clause}. Aim for a "
+            f'derivation of "{chapter_title}"{focus_clause}. Aim for a '
             "clear, step-by-step explanation a learner can follow."
         )
 

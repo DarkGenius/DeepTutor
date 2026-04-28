@@ -11,12 +11,13 @@ from typing import Any
 
 from deeptutor.services.llm import (
     clean_thinking_tags,
-    complete as llm_complete,
     get_llm_config,
     get_token_limit_kwargs,
 )
-
-from ._language import language_directive
+from deeptutor.services.llm import (
+    complete as llm_complete,
+)
+from deeptutor.services.prompt.language import append_language_directive
 
 
 async def llm_text(
@@ -37,7 +38,7 @@ async def llm_text(
     JSON keys, or non-matching source material.
     """
     if language:
-        system_prompt = system_prompt.rstrip() + language_directive(language)
+        system_prompt = append_language_directive(system_prompt, language)
 
     config = get_llm_config()
     model = config.model

@@ -5,11 +5,11 @@ Turn-level runtime manager for unified chat streaming.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
 import contextlib
+from dataclasses import dataclass, field
 import json
 import logging
-from collections.abc import AsyncIterator
-from dataclasses import dataclass, field
 from typing import Any
 
 from deeptutor.core.stream import StreamEvent, StreamEventType
@@ -174,11 +174,7 @@ def _format_followup_question_context(context: dict[str, Any], language: str = "
                 option_lines.append(f"{key}. {value}")
     correctness = context.get("is_correct")
     correctness_text = (
-        "correct"
-        if correctness is True
-        else "incorrect"
-        if correctness is False
-        else "unknown"
+        "correct" if correctness is True else "incorrect" if correctness is False else "unknown"
     )
 
     if str(language or "en").lower().startswith("zh"):
@@ -294,9 +290,7 @@ class TurnRuntimeManager:
             "answer_now_context",
         )
         runtime_only_config = {
-            key: raw_config.pop(key)
-            for key in runtime_only_keys
-            if key in raw_config
+            key: raw_config.pop(key) for key in runtime_only_keys if key in raw_config
         }
         try:
             from deeptutor.capabilities.request_contracts import validate_capability_config
@@ -408,11 +402,7 @@ class TurnRuntimeManager:
             if overrides.get("knowledge_bases") is not None
             else preferences.get("knowledge_bases") or []
         )
-        language = str(
-            overrides.get("language")
-            or preferences.get("language")
-            or "en"
-        )
+        language = str(overrides.get("language") or preferences.get("language") or "en")
 
         config: dict[str, Any] = dict(overrides.get("config") or {})
         config.update(
@@ -507,7 +497,9 @@ class TurnRuntimeManager:
             async with self._lock:
                 execution = self._executions.get(turn_id)
                 if execution is not None:
-                    execution.subscribers = [sub for sub in execution.subscribers if sub is not subscriber]
+                    execution.subscribers = [
+                        sub for sub in execution.subscribers if sub is not subscriber
+                    ]
 
     async def subscribe_session(
         self,
@@ -531,12 +523,12 @@ class TurnRuntimeManager:
         assistant_content = ""
 
         try:
+            from deeptutor.agents.notebook import NotebookAnalysisAgent
             from deeptutor.core.context import Attachment, UnifiedContext
             from deeptutor.runtime.orchestrator import ChatOrchestrator
-            from deeptutor.agents.notebook import NotebookAnalysisAgent
+            from deeptutor.services.llm.config import get_llm_config
             from deeptutor.services.memory import get_memory_service
             from deeptutor.services.notebook import notebook_manager
-            from deeptutor.services.llm.config import get_llm_config
             from deeptutor.services.session.context_builder import ContextBuilder
             from deeptutor.services.skill import get_skill_service
 
@@ -549,12 +541,15 @@ class TurnRuntimeManager:
             raw_user_content = str(payload.get("content", "") or "")
             notebook_references = payload.get("notebook_references", []) or []
             history_references = payload.get("history_references", []) or []
-            question_notebook_references = (
-                payload.get("question_notebook_references", []) or []
-            )
+            question_notebook_references = payload.get("question_notebook_references", []) or []
             notebook_context = ""
             history_context = ""
             question_bank_context = ""
+
+            import base64 as _b64
+            import uuid as _uuid
+
+            from deeptutor.services.storage import get_attachment_store
 
             for item in payload.get("attachments", []):
                 record = {
@@ -563,9 +558,74 @@ class TurnRuntimeManager:
                     "base64": item.get("base64", ""),
                     "filename": item.get("filename", ""),
                     "mime_type": item.get("mime_type", ""),
+                    "id": item.get("id", "") or _uuid.uuid4().hex[:12],
                 }
                 attachment_records.append(record)
-                attachments.append(Attachment(**record))
+
+            # Persist original bytes to the attachment store before extraction
+            # so the frontend preview drawer can fetch the file later. The
+            # extractor will clear base64 on documents to keep DB rows lean,
+            # but the URL we record here outlives that pruning. Upload errors
+            # are non-fatal — extraction still runs from the in-memory base64.
+            attachment_store = get_attachment_store()
+            for record in attachment_records:
+                if record.get("url"):
+                    continue  # already hosted (e.g. legacy URL)
+                b64 = record.get("base64") or ""
+                if not b64:
+                    continue
+                try:
+                    raw_bytes = _b64.b64decode(b64, validate=False)
+                except Exception as exc:
+                    logger.warning(
+                        "skipping attachment upload for %r: invalid base64 (%s)",
+                        record.get("filename"),
+                        exc,
+                    )
+                    continue
+                try:
+                    record["url"] = await attachment_store.put(
+                        session_id=session_id,
+                        attachment_id=record["id"],
+                        filename=record.get("filename", "") or "file",
+                        data=raw_bytes,
+                        mime_type=record.get("mime_type", "") or "",
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "attachment store rejected %r: %s",
+                        record.get("filename"),
+                        exc,
+                    )
+
+            from deeptutor.utils.document_extractor import extract_documents_from_records
+
+            document_texts, attachment_records = extract_documents_from_records(
+                attachment_records
+            )
+            attachments = [
+                Attachment(
+                    type=r.get("type", "file"),
+                    url=r.get("url", ""),
+                    base64=r.get("base64", ""),
+                    filename=r.get("filename", ""),
+                    mime_type=r.get("mime_type", ""),
+                    id=r.get("id", ""),
+                    extracted_text=r.get("extracted_text", ""),
+                )
+                for r in attachment_records
+            ]
+            # DB persistence copy: drop base64 unconditionally now that the
+            # original bytes live in the attachment store. Image attachments
+            # used to keep base64 here (which bloated message rows); the URL
+            # is now the stable source for previews.
+            persisted_attachment_records = [
+                {
+                    **{k: v for k, v in r.items() if k != "base64"},
+                    "base64": "",
+                }
+                for r in attachment_records
+            ]
 
             if followup_question_context:
                 existing_messages = await self.store.get_messages_for_context(session_id)
@@ -582,11 +642,15 @@ class TurnRuntimeManager:
 
             llm_config = get_llm_config()
             builder = ContextBuilder(self.store)
+
+            async def _emit_context_event(event: StreamEvent) -> None:
+                await self._persist_and_publish(execution, event)
+
             history_result = await builder.build(
                 session_id=session_id,
                 llm_config=llm_config,
                 language=payload.get("language", "en"),
-                on_event=lambda event: self._persist_and_publish(execution, event),
+                on_event=_emit_context_event,
             )
             memory_service = get_memory_service()
             memory_context = memory_service.build_memory_context()
@@ -596,7 +660,9 @@ class TurnRuntimeManager:
             if not requested_skills or requested_skills == ["auto"]:
                 resolved_skills = skill_service.auto_select(raw_user_content)
             else:
-                resolved_skills = [s for s in requested_skills if isinstance(s, str) and s != "auto"]
+                resolved_skills = [
+                    s for s in requested_skills if isinstance(s, str) and s != "auto"
+                ]
             skills_context = skill_service.load_for_context(resolved_skills)
 
             if notebook_references:
@@ -608,7 +674,7 @@ class TurnRuntimeManager:
                     notebook_context = await analysis_agent.analyze(
                         user_question=raw_user_content,
                         records=referenced_records,
-                        emit=lambda event: self._persist_and_publish(execution, event),
+                        emit=_emit_context_event,
                     )
 
             if history_references:
@@ -631,7 +697,9 @@ class TurnRuntimeManager:
                     if not transcript_lines:
                         continue
 
-                    history_summary = str(history_session.get("compressed_summary", "") or "").strip()
+                    history_summary = str(
+                        history_session.get("compressed_summary", "") or ""
+                    ).strip()
                     if not history_summary:
                         history_summary = _clip_text(
                             " ".join(
@@ -666,7 +734,7 @@ class TurnRuntimeManager:
                     history_context = await analysis_agent.analyze(
                         user_question=raw_user_content,
                         records=history_records,
-                        emit=lambda event: self._persist_and_publish(execution, event),
+                        emit=_emit_context_event,
                     )
                     if not history_context.strip():
                         MAX_FALLBACK_CHARS = 8000
@@ -693,14 +761,14 @@ class TurnRuntimeManager:
 
             effective_user_message = raw_user_content
             context_parts: list[str] = []
+            if document_texts:
+                context_parts.append("[Attached Documents]\n" + "\n\n".join(document_texts))
             if notebook_context:
                 context_parts.append(f"[Notebook Context]\n{notebook_context}")
             if history_context:
                 context_parts.append(f"[History Context]\n{history_context}")
             if question_bank_context:
-                context_parts.append(
-                    f"[Question Bank Context]\n{question_bank_context}"
-                )
+                context_parts.append(f"[Question Bank Context]\n{question_bank_context}")
             if context_parts:
                 context_parts.append(f"[User Question]\n{raw_user_content}")
                 effective_user_message = "\n\n".join(context_parts)
@@ -714,7 +782,7 @@ class TurnRuntimeManager:
                     role="user",
                     content=raw_user_content,
                     capability=capability_name,
-                    attachments=attachment_records,
+                    attachments=persisted_attachment_records,
                 )
 
             context = UnifiedContext(

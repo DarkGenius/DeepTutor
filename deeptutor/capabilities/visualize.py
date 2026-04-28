@@ -42,12 +42,10 @@ class VisualizeCapability(BaseCapability):
             return
 
         llm_config = get_llm_config()
-        history_context = str(
-            context.metadata.get("conversation_context_text", "") or ""
-        ).strip()
-        render_mode = str(
-            context.config_overrides.get("render_mode", "auto") or "auto"
-        ).strip().lower()
+        history_context = str(context.metadata.get("conversation_context_text", "") or "").strip()
+        render_mode = (
+            str(context.config_overrides.get("render_mode", "auto") or "auto").strip().lower()
+        )
 
         pipeline = VisualizePipeline(
             api_key=llm_config.api_key,
@@ -68,6 +66,7 @@ class VisualizeCapability(BaseCapability):
                 user_input=context.user_message,
                 history_context=history_context,
                 render_mode=render_mode,
+                attachments=context.attachments,
             )
             await stream.progress(
                 message=f"Render type: {analysis.render_type} — {analysis.description}",
@@ -211,9 +210,9 @@ class VisualizeCapability(BaseCapability):
         partial = str(payload.get("partial_response") or "").strip()
         trace_summary = format_trace_summary(payload.get("events"), language=context.language)
 
-        render_mode = str(
-            context.config_overrides.get("render_mode", "auto") or "auto"
-        ).strip().lower()
+        render_mode = (
+            str(context.config_overrides.get("render_mode", "auto") or "auto").strip().lower()
+        )
 
         prompts = load_answer_now_prompts("visualize", context.language)
         system_prompt = str(prompts.get("system", "")).strip()
@@ -257,7 +256,7 @@ class VisualizeCapability(BaseCapability):
         if raw.startswith("```"):
             raw = re.sub(r"^```[a-zA-Z]*\n?", "", raw)
             if raw.endswith("```"):
-                raw = raw[: -3].rstrip()
+                raw = raw[:-3].rstrip()
         try:
             parsed = json.loads(raw)
         except json.JSONDecodeError:
@@ -327,9 +326,7 @@ class VisualizeCapability(BaseCapability):
                 return
 
             state = str(update.get("state", "running"))
-            label = str(
-                base_metadata.get("label", "") or stage.replace("_", " ").title()
-            )
+            label = str(base_metadata.get("label", "") or stage.replace("_", " ").title())
             if state == "running":
                 await stream.progress(
                     message=label,
